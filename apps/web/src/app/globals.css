@@ -191,3 +191,80 @@
     user-select: text;
   }
 }
+
+/* Accessibility: High contrast mode */
+.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 100%;
+  --primary: 120 100% 50%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 60 100% 50%;
+  --secondary-foreground: 0 0% 0%;
+  --border: 0 0% 50%;
+  --ring: 120 100% 50%;
+}
+
+/* Accessibility: Large text */
+.large-text {
+  font-size: 1.125rem;
+}
+
+.large-text .text-sm { font-size: 0.875rem; }
+.large-text .text-base { font-size: 1.125rem; }
+.large-text .text-lg { font-size: 1.25rem; }
+.large-text .text-xl { font-size: 1.5rem; }
+.large-text .text-2xl { font-size: 2rem; }
+
+/* Accessibility: Reduced motion */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible for accessibility */
+.focus-visible-ring:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Skip link */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 px-4 py-2 bg-primary-600 text-white rounded-lg;
+}
+
+/* Hindi/Devanagari font support */
+.hindi-text {
+  font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+}
+
+/* PWA specific */
+@media (display-mode: standalone) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}

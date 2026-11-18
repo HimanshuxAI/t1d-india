@@ -1,0 +1,118 @@
+{
+  "name": "T1D India - Diabetes Management",
+  "short_name": "T1D India",
+  "description": "AI-powered hypoglycemia prediction and carb-counting for Indian Type 1 Diabetes diets",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "health", "fitness"],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard with glucose trends"
+    },
+    {
+      "src": "/screenshots/meal-logging.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Meal logging with Indian foods"
+    },
+    {
+      "src": "/screenshots/insulin-calculator.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Insulin dose calculator"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log Meal",
+      "short_name": "Log Meal",
+      "description": "Quickly log a meal",
+      "url": "/meals/new",
+      "icons": [{ "src": "/icons/meal-shortcut.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Insulin Calculator",
+      "short_name": "Insulin",
+      "description": "Calculate insulin dose",
+      "url": "/insulin",
+      "icons": [{ "src": "/icons/insulin-shortcut.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Glucose Trends",
+      "short_name": "CGM",
+      "description": "View glucose trends",
+      "url": "/cgm",
+      "icons": [{ "src": "/icons/cgm-shortcut.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}

@@ -8,12 +8,16 @@ import { predictionRoutes } from './predictions';
 import { insulinRoutes } from './insulin';
 import { profileRoutes } from './profile';
 import { authRoutes } from './auth';
+import { mealPhotoRoutes } from './meal-photo';
+import { mealVoiceRoutes } from './meal-voice';
 
 export async function registerRoutes(app: FastifyInstance) {
   // API version prefix
   await app.register(async (api) => {
     api.register(authRoutes, { prefix: '/auth' });
     api.register(mealRoutes, { prefix: '/meals' });
+    api.register(mealPhotoRoutes, { prefix: '/meals/photo' });
+    api.register(mealVoiceRoutes, { prefix: '/meals/voice' });
     api.register(foodRoutes, { prefix: '/foods' });
     api.register(cgmRoutes, { prefix: '/cgm' });
     api.register(predictionRoutes, { prefix: '/predictions' });

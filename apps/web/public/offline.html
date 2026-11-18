@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - T1D India</title>
+  <meta name="theme-color" content="#16a34a">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      color: #1f2937;
+      padding: 20px;
+    }
+
+    .dark body {
+      background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+      color: #f0fdf4;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 400px;
+      padding: 40px 20px;
+    }
+
+    .icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+    }
+
+    .icon svg {
+      width: 50px;
+      height: 50px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1f2937;
+    }
+
+    .dark h1 {
+      color: #f0fdf4;
+    }
+
+    p {
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .dark p {
+      color: #9ca3af;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 32px 0;
+    }
+
+    .feature {
+      padding: 16px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .dark .feature {
+      background: #1f2937;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 8px;
+      background: #dcfce7;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dark .feature-icon {
+      background: #166534;
+    }
+
+    .feature-icon svg {
+      width: 20px;
+      height: 20px;
+      color: #16a34a;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+    }
+
+    .feature-desc {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .dark .feature-desc {
+      color: #9ca3af;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+      background: #fef3c7;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .dark .status {
+      background: #78350f;
+      color: #fde68a;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-text {
+      font-weight: 500;
+      color: #92400e;
+    }
+
+    .dark .status-text {
+      color: #fde68a;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #15803d;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #16a34a;
+      border: 2px solid #16a34a;
+    }
+
+    .dark .btn-secondary {
+      background: #1f2937;
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .btn-secondary:hover {
+      background: #f0fdf4;
+    }
+
+    .dark .btn-secondary:hover {
+      background: #166534;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .offline-note {
+      margin-top: 32px;
+      padding: 16px;
+      background: #fef3c7;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: #92400e;
+    }
+
+    .dark .offline-note {
+      background: #78350f;
+      color: #fde68a;
+    }
+
+    .offline-note strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .retry-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+        color: #f0fdf4;
+      }
+
+      h1 { color: #f0fdf4; }
+      p { color: #9ca3af; }
+      .feature { background: #1f2937; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+      .feature-icon { background: #166534; }
+      .feature-desc { color: #9ca3af; }
+      .status { background: #78350f; color: #fde68a; }
+      .status-text { color: #fde68a; }
+      .offline-note { background: #78350f; color: #fde68a; }
+      .btn-secondary { background: #1f2937; border-color: #22c55e; color: #22c55e; }
+      .btn-secondary:hover { background: #166534; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+    <p>No internet connection detected. T1D India works offline - your data will sync when you're back online.</p>
+
+    <div class="status" role="status" aria-live="polite">
+      <div class="status-indicator" aria-hidden="true"></div>
+      <span class="status-text">Currently offline</span>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p class="feature-title">Glucose Data</p>
+        <p class="feature-desc">Cached locally for 30 days</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6m19 0 .015.017v12.5" />
+          </svg>
+        </div>
+        <p class="feature-title">Meal Logs</p>
+        <p class="feature-desc">Saved locally, syncs later</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p class="feature-title">Insulin Logs</p>
+        <p class="feature-desc">Queued for sync</p>
+      </div>
+    </div>
+
+    <div class="offline-note">
+      <strong>What works offline:</strong>
+      • View cached glucose trends (last 30 days)<br>
+      • Log meals, insulin, and notes<br>
+      • Use insulin calculator<br>
+      • View meal history<br>
+      <br>
+      Data syncs automatically when connection restores.
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary retry-btn" id="retryBtn" onclick="checkConnection()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span id="retryText">Check Connection</span>
+      </button>
+
+      <a href="/dashboard" class="btn btn-secondary">
+        Continue to Dashboard
+      </a>
+    </div>
+
+    <div class="offline-note" style="margin-top: 16px; background: #f0fdf4; color: #166534;">
+      <strong>Tip:</strong> Keep this tab open. Data will sync automatically when you're back online.
+    </div>
+  </div>
+
+  <script>
+    // Check connection periodically
+    async function checkConnection() {
+      const btn = document.getElementById('retryBtn');
+      const text = document.getElementById('retryText');
+      const originalText = text.textContent;
+
+      btn.disabled = true;
+      text.textContent = 'Checking...';
+
+      try {
+        const response = await fetch('/health', { method: 'HEAD', cache: 'no-cache' });
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch (e) {
+        // Still offline
+      }
+
+      btn.disabled = false;
+      text.textContent = originalText;
+    }
+
+    // Auto-check every 30 seconds
+    setInterval(checkConnection, 30000);
+
+    // Listen for online event
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+
+    // Register service worker if not already
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        console.log('SW ready for offline');
+      });
+    }
+  </script>
+</body>
+</html>

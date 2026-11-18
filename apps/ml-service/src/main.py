@@ -1,17 +1,24 @@
-# ML Inference Service - FastAPI
+"""
+T1D India ML Inference Service - FastAPI
+Serves hypoglycemia prediction, carb estimation, and insulin dosing models via ONNX Runtime.
+"""
 
 import os
 import json
+import base64
 import logging
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from io import BytesIO
 
 import numpy as np
 import onnxruntime as ort
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import structlog
+from PIL import Image
 
 # Configure structured logging
 structlog.configure(
@@ -44,13 +51,63 @@ CARB_MODEL_NAME = os.getenv("CARB_MODEL_NAME", "carb_estimator.onnx")
 hypo_session: Optional[ort.InferenceSession] = None
 carb_session: Optional[ort.InferenceSession] = None
 
+# Model metadata
+MODEL_METADATA = {
+    "hypo": {
+        "name": "tft_hypo_predictor",
+        "version": "1.0.0",
+        "input_shape": [1, 6, 72],  # batch, seq_len, features
+        "output_shape": [1, 6],     # 3 quantiles x 2 horizons
+        "features": 72,
+        "static_features": 12,
+        "seq_len": 6,
+        "quantiles": [0.1, 0.5, 0.9],
+        "horizons": [30, 60],
+    },
+    "carb": {
+        "name": "indian_food_carb_estimator",
+        "version": "1.0.0",
+        "input_shape": [1, 3, 300, 300],
+        "num_classes": 256,
+        "backbone": "efficientnet_b3",
+    }
+}
+
+# Indian food class labels (truncated - full list in production)
+FOOD_CLASSES = [
+    "rajma_chawal", "chole_bhature", "dosa_sambar", "idli_sambar",
+    "biryani_veg", "biryani_chicken", "roti_dal_sabzi", "paratha_aloo",
+    "poha", "upma", "pongal", "khichdi", "thepla", "dhokla",
+    "pav_bhaji", "vada_pav", "samosa", "pakora", "jalebi", "gulab_jamun",
+    # ... 236 more classes
+]
+
+# Insulin safety limits (shared with API)
+INSULIN_SAFETY = {
+    "MAX_BOLUS_U": 15.0,
+    "MAX_CORRECTION_U": 5.0,
+    "MIN_GLUCOSE_FOR_CORRECTION": 90,
+    "TARGET_GLUCOSE": 110,
+    "MIN_PREDICTED_GLUCOSE": 70,
+    "IOB_HIGH_THRESHOLD_U": 3.0,
+    "RECENT_HYPO_WINDOW_MIN": 120,
+    "MAX_IOB_ADJUSTMENT_FACTOR": 0.5,
+}
+
+# Insulin PK parameters for Indian regimens
+INSULIN_PK_PARAMS = {
+    "rapid": {"ka": 0.018, "ke": 0.012, "t_max": 60, "bioavailability": 0.85},
+    "regular": {"ka": 0.008, "ke": 0.006, "t_max": 120, "bioavailability": 0.75},
+    "nph": {"ka": 0.003, "ke": 0.002, "t_max": 360, "bioavailability": 0.70},
+    "premixed_30_70": {"ka": 0.008, "ke": 0.003, "t_max": 240, "bioavailability": 0.72},
+}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     global hypo_session, carb_session
 
-    # Load models on startup
     logger.info("Loading ML models...")
     try:
         hypo_path = os.path.join(MODEL_PATH, HYPO_MODEL_NAME)
@@ -72,7 +129,6 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Cleanup on shutdown
     logger.info("Shutting down ML service")
 
 
@@ -128,7 +184,7 @@ class HypoPredictionOutput(BaseModel):
     glucoseP90: int
     hypoProbability: float
     severeHypoProbability: float
-    topFeatures: List[dict]
+    topFeatures: List[Dict[str, Any]]
     modelVersion: str
 
 
@@ -169,7 +225,11 @@ class BolusCalculationOutput(BaseModel):
     maxAllowedU: float
     warnings: List[str]
     explanation: str
-    safetyCheck: dict
+    safetyCheck: Dict[str, Any]
+
+
+class ModelInfoResponse(BaseModel):
+    models: List[Dict[str, Any]]
 
 
 # ============================================
@@ -205,7 +265,6 @@ async def predict_hypo(input_data: HypoPredictionInput):
 
     try:
         # Prepare input tensor (batch_size=1, seq_len=6, features=72)
-        # Features order must match training
         features = np.array([
             input_data.glucose +
             input_data.roc +
@@ -238,9 +297,9 @@ async def predict_hypo(input_data: HypoPredictionInput):
         # Outputs: [glucose_p10_30, glucose_p50_30, glucose_p90_30,
         #           glucose_p10_60, glucose_p50_60, glucose_p90_60,
         #           hypo_prob_30, hypo_prob_60, severe_hypo_prob_30, severe_hypo_prob_60]
-        preds = outputs[0][0]  # Shape: (10,)
+        preds = outputs[0][0]
 
-        # Get feature importance (simplified - in production use attention weights)
+        # Feature importance (simplified)
         feature_names = [
             "glucose_t", "glucose_t-1", "glucose_t-2", "glucose_t-3", "glucose_t-4", "glucose_t-5",
             "roc_t", "roc_t-1", "roc_t-2", "roc_t-3", "roc_t-4", "roc_t-5",
@@ -252,7 +311,6 @@ async def predict_hypo(input_data: HypoPredictionInput):
             "hr_t", "hr_t-1", "hr_t-2", "hr_t-3", "hr_t-3", "hr_t-5",
         ]
 
-        # Simple feature importance based on input magnitude
         feature_importance = np.abs(features[0]).mean(axis=0)
         top_indices = np.argsort(feature_importance)[-5:][::-1]
         top_features = [
@@ -302,10 +360,6 @@ async def predict_carbs(input_data: CarbEstimationInput):
 
     try:
         # Decode base64 image
-        import base64
-        from io import BytesIO
-        from PIL import Image
-
         image_data = base64.b64decode(input_data.imageBase64)
         image = Image.open(BytesIO(image_data)).convert("RGB")
         image = image.resize((300, 300))
@@ -327,9 +381,7 @@ async def predict_carbs(input_data: CarbEstimationInput):
         top_class_idx = np.argmax(class_probs)
         top_confidence = float(class_probs[top_class_idx])
 
-        # Map class index to food name (would come from label encoder)
-        food_classes = load_food_classes()
-        food_class = food_classes[top_class_idx] if top_class_idx < len(food_classes) else "unknown"
+        food_class = FOOD_CLASSES[top_class_idx] if top_class_idx < len(FOOD_CLASSES) else "unknown"
 
         logger.info("Carb estimation completed", food_class=food_class, carbs_g=carbs_g)
         return CarbEstimationOutput(
@@ -349,26 +401,103 @@ async def predict_carbs(input_data: CarbEstimationInput):
 # INSULIN BOLUS CALCULATION
 # ============================================
 
+def calculate_iob(dose_u: float, minutes_since: float, insulin_type: str) -> float:
+    """Calculate Insulin On Board using two-compartment model."""
+    params = INSULIN_PK_PARAMS.get(insulin_type, INSULIN_PK_PARAMS["rapid"])
+    if minutes_since < 0:
+        return 0
+
+    t = minutes_since
+    ka, ke, bioav = params["ka"], params["ke"], params["bioavailability"]
+
+    if abs(ka - ke) < 1e-6:
+        return dose_u * bioav * (1 - np.exp(-ka * t)) * np.exp(-ke * t)
+
+    iob = dose_u * bioav * (ka / (ka - ke)) * (np.exp(-ke * t) - np.exp(-ka * t))
+    return max(0, iob)
+
+
 @app.post("/v1/calculate/bolus", response_model=BolusCalculationOutput, dependencies=[Depends(verify_api_key)])
 async def calculate_bolus(input_data: BolusCalculationInput):
     try:
-        # Use same logic as API service
-        from calculate_bolus import calculate_bolus as calc_bolus
+        warnings = []
+        meal_bolus = 0.0
+        correction_bolus = 0.0
 
-        result = calc_bolus(
-            carbsG=input_data.carbsG,
-            currentGlucose=input_data.currentGlucose,
-            iobRapid=input_data.iobRapid,
-            iobRegular=input_data.iobRegular,
-            iobNph=input_data.iobNph,
-            icr=input_data.icr,
-            isf=input_data.isf,
-            regimen=input_data.regimen,
-            recentHypo=input_data.recentHypo,
-            timeSinceLastMealMin=input_data.timeSinceLastMealMin,
+        # 1. Meal bolus
+        if input_data.carbsG > 0 and input_data.icr > 0:
+            meal_bolus = input_data.carbsG / input_data.icr
+
+        # 2. Correction bolus
+        if (input_data.currentGlucose > INSULIN_SAFETY["TARGET_GLUCOSE"] and
+            not input_data.recentHypo and
+            input_data.currentGlucose >= INSULIN_SAFETY["MIN_GLUCOSE_FOR_CORRECTION"]):
+            correction_bolus = (input_data.currentGlucose - INSULIN_SAFETY["TARGET_GLUCOSE"]) / input_data.isf
+            correction_bolus = min(correction_bolus, INSULIN_SAFETY["MAX_CORRECTION_U"])
+
+        # 3. IOB adjustment
+        total_iob = input_data.iobRapid + input_data.iobRegular * 0.5 + input_data.iobNph * 0.3
+        iob_adjustment = 0.0
+        if total_iob > INSULIN_SAFETY["IOB_HIGH_THRESHOLD_U"]:
+            warnings.append(f"High IOB ({total_iob:.1f}U) - consider reducing bolus")
+            iob_adjustment = max(0, (total_iob - INSULIN_SAFETY["IOB_HIGH_THRESHOLD_U"]) * INSULIN_SAFETY["MAX_IOB_ADJUSTMENT_FACTOR"])
+
+        # 4. Regimen-specific adjustments
+        regimen_adjustment = 0.0
+        if input_data.regimen == "NPH_REGULAR" and input_data.timeSinceLastMealMin and 240 <= input_data.timeSinceLastMealMin <= 480:
+            warnings.append("Morning NPH may be peaking - consider 20% bolus reduction")
+            regimen_adjustment = -0.2 * (input_data.iobRapid + input_data.iobRegular)
+        elif input_data.regimen == "PREMIXED_30_70" and input_data.timeSinceLastMealMin and 180 <= input_data.timeSinceLastMealMin <= 360:
+            warnings.append("Premixed NPH component active - reduced correction recommended")
+            regimen_adjustment = -0.15 * input_data.iobNph
+
+        # 5. Total bolus
+        total_bolus = meal_bolus + correction_bolus - iob_adjustment + regimen_adjustment
+        total_bolus = max(0, total_bolus)
+
+        # 6. Safety cap
+        max_allowed = INSULIN_SAFETY["MAX_BOLUS_U"]
+        if total_bolus > max_allowed:
+            warnings.append(f"Calculated bolus ({total_bolus:.1f}U) exceeds max ({max_allowed}U)")
+            total_bolus = max_allowed
+
+        # 7. Predicted glucose floor check
+        predicted_drop = total_bolus * input_data.isf
+        predicted_min = input_data.currentGlucose - predicted_drop
+        if predicted_min < INSULIN_SAFETY["MIN_PREDICTED_GLUCOSE"]:
+            warnings.append(f"Predicted glucose may drop to {round(predicted_min)} mg/dL")
+            safe_bolus = (input_data.currentGlucose - 80) / input_data.isf
+            total_bolus = min(total_bolus, max(0, safe_bolus))
+
+        # 8. Recent hypo warning
+        if input_data.recentHypo:
+            warnings.append("Recent hypoglycemia detected - consider reducing bolus by 25-50%")
+
+        # Generate explanation
+        explanation_parts = [
+            f"Meal bolus: {meal_bolus:.1f}U ({input_data.carbsG}g / {input_data.icr}g/U)",
+        ]
+        if correction_bolus > 0:
+            explanation_parts.append(f"Correction: {correction_bolus:.1f}U (({input_data.currentGlucose}-{INSULIN_SAFETY['TARGET_GLUCOSE']}) / {input_data.isf})")
+        else:
+            explanation_parts.append("No correction needed")
+        if iob_adjustment > 0:
+            explanation_parts.append(f"IOB adjustment: -{iob_adjustment:.1f}U")
+        if regimen_adjustment != 0:
+            explanation_parts.append(f"Regimen adjustment: {regimen_adjustment:+.1f}U")
+
+        return BolusCalculationOutput(
+            mealBolusU=round(meal_bolus, 1),
+            correctionBolusU=round(correction_bolus, 1),
+            totalBolusU=round(total_bolus, 1),
+            maxAllowedU=max_allowed,
+            warnings=warnings,
+            explanation="; ".join(explanation_parts),
+            safetyCheck={
+                "predictedMinGlucose": round(predicted_min),
+                "iobTotalU": round(total_iob, 1),
+            },
         )
-
-        return BolusCalculationOutput(**result)
 
     except Exception as e:
         logger.error("Bolus calculation failed", error=str(e))
@@ -379,7 +508,7 @@ async def calculate_bolus(input_data: BolusCalculationInput):
 # MODEL INFO
 # ============================================
 
-@app.get("/v1/models", dependencies=[Depends(verify_api_key)])
+@app.get("/v1/models", response_model=ModelInfoResponse, dependencies=[Depends(verify_api_key)])
 async def list_models():
     return {
         "models": [
@@ -390,7 +519,7 @@ async def list_models():
                 "framework": "onnx",
                 "loaded": hypo_session is not None,
                 "input_shape": [1, 6, 72] if hypo_session else None,
-                "output_shape": [1, 10] if hypo_session else None,
+                "output_shape": [1, 6] if hypo_session else None,
             },
             {
                 "name": "indian_food_carb_estimator",
@@ -405,16 +534,25 @@ async def list_models():
     }
 
 
-def load_food_classes() -> List[str]:
-    """Load food class labels"""
-    # In production, load from label encoder file
-    return [
-        "rajma_chawal", "chole_bhature", "dosa_sambar", "idli_sambar",
-        "biryani_veg", "biryani_chicken", "roti_dal_sabzi", "paratha_aloo",
-        "poha", "upma", "pongal", "khichdi", "thepla", "dhokla",
-        "pav_bhaji", "vada_pav", "samosa", "pakora", "jalebi", "gulab_jamun",
-        # ... 236 more classes
-    ]
+# ============================================
+# EXCEPTION HANDLERS
+# ============================================
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "status_code": exc.status_code},
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    logger.error("Unhandled exception", error=str(exc))
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "status_code": 500},
+    )
 
 
 if __name__ == "__main__":
