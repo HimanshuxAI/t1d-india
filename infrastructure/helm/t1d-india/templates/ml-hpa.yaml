@@ -1,0 +1,40 @@
+{{- if .Values.ml.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "t1d-india.ml.fullname" . }}
+  labels:
+    {{- include "t1d-india.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "t1d-india.ml.fullname" . }}
+  minReplicas: {{ .Values.ml.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.ml.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.ml.autoscaling.targetCPUUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+      selectPolicy: Max
+{{- end }}

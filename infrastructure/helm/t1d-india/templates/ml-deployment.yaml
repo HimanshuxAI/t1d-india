@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "t1d-india.ml.fullname" . }}
+  labels:
+    {{- include "t1d-india.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml
+spec:
+  replicas: {{ .Values.ml.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "t1d-india.ml.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.ml.podAnnotations }}
+        {{- toYaml .Values.ml.podAnnotations | nindent 8 }}
+        {{- end }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/ml-secret.yaml") . | sha256sum }}
+      labels:
+        {{- include "t1d-india.ml.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: ml
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.ml.image.repository }}:{{ .Values.ml.image.tag }}"
+          imagePullPolicy: {{ .Values.ml.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ml.service.port }}
+              protocol: TCP
+          envFrom:
+            {{- toYaml .Values.ml.envFrom | nindent 12 }}
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.ml.resources | nindent 12 }}
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: {{ include "t1d-india.ml.fullname" . }}-models
+      {{- with .Values.ml.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ml.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ml.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

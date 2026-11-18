@@ -1,0 +1,186 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: t1d-postgres
+    environment:
+      POSTGRES_DB: t1d
+      POSTGRES_USER: t1d
+      POSTGRES_PASSWORD: t1d_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-timescaledb.sql:/docker-entrypoint-initdb.d/init-timescaledb.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U t1d -d t1d"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - t1d-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: t1d-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - t1d-network
+
+  # API Service
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.api
+    container_name: t1d-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://t1d:t1d_dev_password@postgres:5432/t1d?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-super-secret-jwt-key-change-in-production-min-32-chars
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      ML_SERVICE_URL: http://ml:8000
+      ML_SERVICE_API_KEY: dev-ml-key
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      CLERK_WEBHOOK_SECRET: ${CLERK_WEBHOOK_SECRET}
+      DEXCOM_CLIENT_ID: ${DEXCOM_CLIENT_ID}
+      DEXCOM_CLIENT_SECRET: ${DEXCOM_CLIENT_SECRET}
+      DEXCOM_REDIRECT_URI: ${DEXCOM_REDIRECT_URI}
+      LIBRE_CLIENT_ID: ${LIBRE_CLIENT_ID}
+      LIBRE_CLIENT_SECRET: ${LIBRE_CLIENT_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - t1d-network
+    volumes:
+      - ../../apps/api:/app/apps/api:ro
+      - ../../packages/shared:/app/packages/shared:ro
+
+  # ML Service
+  ml:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.ml
+    container_name: t1d-ml
+    environment:
+      ML_SERVICE_API_KEY: dev-ml-key
+      MODEL_PATH: /models
+      HYPO_MODEL_NAME: tft_hypo_predictor.onnx
+      CARB_MODEL_NAME: carb_estimator.onnx
+    ports:
+      - "8000:8000"
+    volumes:
+      - ml_models:/models
+      - ../../apps/ml-service:/app:ro
+    networks:
+      - t1d-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # MinIO (S3-compatible storage)
+  minio:
+    image: minio/minio:latest
+    container_name: t1d-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - t1d-network
+
+  # Create MinIO buckets
+  minio-setup:
+    image: minio/mc:latest
+    container_name: t1d-minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set myminio http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      mc mb myminio/t1d-models --ignore-existing;
+      mc mb myminio/t1d-meal-photos --ignore-existing;
+      mc anonymous set public myminio/t1d-models;
+      mc anonymous set public myminio/t1d-meal-photos;
+      "
+    networks:
+      - t1d-network
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: t1d-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - t1d-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: t1d-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - t1d-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  ml_models:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  t1d-network:
+    driver: bridge

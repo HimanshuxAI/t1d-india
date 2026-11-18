@@ -1,0 +1,225 @@
+# Default values for T1D India Helm chart
+
+global:
+  environment: staging
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+
+# API Service
+api:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: t1d-india-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  service:
+    type: ClusterIP
+    port: 3000
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    hosts:
+      - host: api.t1d-india.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: t1d-api-tls
+        hosts:
+          - api.t1d-india.example.com
+  config:
+    NODE_ENV: production
+    LOG_LEVEL: info
+    ENABLE_SWAGGER: "false"
+    ENABLE_METRICS: "true"
+  envFrom:
+    - secretRef:
+        name: t1d-api-secrets
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+    prometheus.io/path: "/metrics"
+
+# ML Service
+ml:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: t1d-india-ml
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+      nvidia.com/gpu: 1
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  service:
+    type: ClusterIP
+    port: 8000
+  envFrom:
+    - secretRef:
+        name: t1d-ml-secrets
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+
+# PostgreSQL (TimescaleDB)
+postgresql:
+  enabled: true
+  image:
+    repository: timescale/timescaledb
+    tag: latest-pg16
+  auth:
+    database: t1d
+    username: t1d
+    # password: set via secret
+  primary:
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: ""
+    extendedConfiguration: |
+      shared_buffers = 256MB
+      effective_cache_size = 1GB
+      maintenance_work_mem = 256MB
+      work_mem = 64MB
+      timescaledb.max_background_workers = 8
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Redis
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    # password: set via secret
+  master:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    persistence:
+      enabled: true
+      size: 10Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# MinIO
+minio:
+  enabled: true
+  mode: standalone
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 50Gi
+  buckets:
+    - name: t1d-models
+      policy: public
+    - name: t1d-meal-photos
+      policy: private
+  console:
+    enabled: true
+    service:
+      type: ClusterIP
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Prometheus
+prometheus:
+  enabled: true
+  prometheus:
+    prometheusSpec:
+      retention: 30d
+      retentionSize: 50GB
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 1Gi
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+  alertmanager:
+    enabled: true
+  grafana:
+    enabled: true
+    adminPassword: ""
+    persistence:
+      enabled: true
+      size: 10Gi
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://prometheus-operated:9090
+            access: proxy
+            isDefault: true
+
+# Ingress NGINX
+ingress-nginx:
+  enabled: true
+  controller:
+    service:
+      type: LoadBalancer
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+
+# Cert Manager
+cert-manager:
+  enabled: true
+  installCRDs: true

@@ -1,0 +1,315 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Lint and TypeCheck
+  lint-and-typecheck:
+    name: Lint & TypeCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Check formatting
+        run: npm run format:check
+
+  # Unit Tests
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: t1d_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --entrypoint redis-server
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run db:generate --workspace=apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/t1d_test
+
+      - name: Run database migrations
+        run: npm run db:migrate --workspace=apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/t1d_test
+
+      - name: Run unit tests
+        run: npm run test --workspaces --if-present
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/t1d_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-key-for-testing-purposes-only
+          ML_SERVICE_API_KEY: test-ml-key
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  # Integration Tests
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test-unit]
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: t1d_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run db:generate --workspace=apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/t1d_test
+
+      - name: Run database migrations
+        run: npm run db:migrate --workspace=apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/t1d_test
+
+      - name: Run integration tests
+        run: npm run test:integration --workspace=apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/t1d_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-key-for-testing-purposes-only
+          ML_SERVICE_API_KEY: test-ml-key
+
+  # ML Service Tests
+  test-ml:
+    name: ML Service Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd apps/ml-service
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx
+
+      - name: Run ML tests
+        run: |
+          cd apps/ml-service
+          pytest tests/ -v --cov=src --cov-report=xml
+
+      - name: Upload ML coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./apps/ml-service/coverage.xml
+          fail_ci_if_error: false
+
+  # Build and Push Docker Images
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration, test-ml]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for API
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for ML
+        id: meta-ml
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ml
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push ML
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.ml
+          push: true
+          tags: ${{ steps.meta-ml.outputs.tags }}
+          labels: ${{ steps.meta-ml.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: ${{ secrets.STAGING_KUBECONFIG }}
+
+      - name: Deploy to staging
+        run: |
+          helm upgrade --install t1d-india ./infrastructure/helm/t1d-india \
+            --namespace t1d-staging \
+            --create-namespace \
+            --set api.image.tag=${{ github.sha }} \
+            --set ml.image.tag=${{ github.sha }} \
+            --set environment=staging \
+            --wait --timeout 10m
+
+      - name: Run smoke tests
+        run: |
+          kubectl run smoke-test --image=curlimages/curl:latest \
+            --restart=Never --rm -i -- \
+            curl -f https://staging-api.t1d-india.example.com/health
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: ${{ secrets.PROD_KUBECONFIG }}
+
+      - name: Deploy to production
+        run: |
+          helm upgrade --install t1d-india ./infrastructure/helm/t1d-india \
+            --namespace t1d-prod \
+            --create-namespace \
+            --set api.image.tag=${{ github.sha }} \
+            --set ml.image.tag=${{ github.sha }} \
+            --set environment=production \
+            --set api.replicaCount=6 \
+            --set ml.replicaCount=3 \
+            --wait --timeout 15m
+
+      - name: Run smoke tests
+        run: |
+          kubectl run smoke-test --image=curlimages/curl:latest \
+            --restart=Never --rm -i -- \
+            curl -f https://api.t1d-india.example.com/health
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "Deployment ${{ job.status }} for ${{ github.sha }}"

@@ -1,0 +1,15 @@
+apiVersion: v2
+name: t1d-india
+description: T1D India - AI-Powered Diabetes Management Platform
+type: application
+version: 0.0.1
+appVersion: "0.0.1"
+keywords:
+  - diabetes
+  - t1d
+  - healthcare
+  - ml
+  - ai
+maintainers:
+  - name: T1D India Team
+    email: team@t1d-india.example.com

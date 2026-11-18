@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "t1d-india.ml.fullname" . }}-models
+  labels:
+    {{- include "t1d-india.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: {{ .Values.ml.storageClassName | default "" }}

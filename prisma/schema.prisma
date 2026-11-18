@@ -1,0 +1,520 @@
+// T1D India - Prisma Schema
+// Database schema for AI-Powered Hypoglycemia Prediction and Carb-Counting Tool
+// Supports PostgreSQL with TimescaleDB extension for CGM time-series data
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  PATIENT
+  CAREGIVER
+  CLINICIAN
+  ADMIN
+}
+
+enum DiabetesType {
+  T1D
+  T2D
+  LADA
+  MODY
+  OTHER
+}
+
+enum InsulinRegimen {
+  BASAL_BOLUS
+  NPH_REGULAR
+  PREMIXED_30_70
+  PREMIXED_50_50
+  PUMP
+  OTHER
+}
+
+enum CGMType {
+  DEXCOM_G6
+  DEXCOM_G7
+  LIBRE_2
+  LIBRE_3
+  MEDTRONIC_G3
+  MEDTRONIC_G4
+  NONE
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+  PRE_WORKOUT
+  POST_WORKOUT
+  BEDTIME
+}
+
+enum InputMethod {
+  TEXT_SEARCH
+  VOICE
+  PHOTO_OCR
+  PHOTO_ML
+  BARCODE
+  COMPOSITE_SELECT
+  MANUAL
+}
+
+enum LocationType {
+  HOME
+  WORK
+  SCHOOL
+  RESTAURANT
+  TRAVEL
+  OTHER
+}
+
+enum InsulinType {
+  RAPID_LISPRO
+  RAPID_ASPART
+  RAPID_GLULISINE
+  REGULAR_HUMAN
+  NPH_HUMAN
+  PREMIXED_30_70
+  PREMIXED_50_50
+  PREMIXED_25_75
+  GLARGINE_U100
+  GLARGINE_U300
+  DEGLUDEC_U100
+  DEGLUDEC_U200
+  BASAL_PUMP
+}
+
+enum InjectionSite {
+  ABDOMEN
+  THIGH
+  ARM
+  BUTTOCK
+  PUMP_SITE
+}
+
+enum DeliveryMethod {
+  PEN
+  SYRINGE
+  PUMP
+  INHALER
+}
+
+enum AlertLevel {
+  WARNING
+  URGENT
+  EMERGENCY
+}
+
+enum CGMSource {
+  DEXCOM_API
+  LIBRE_API
+  MEDTRONIC_API
+  BLUETOOTH
+  MANUAL
+  SIMULATED
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  clerkId       String    @unique @map("clerk_id")
+  email         String    @unique
+  phoneHash     String?   @map("phone_hash")
+  role          UserRole  @default(PATIENT)
+  locale        String    @default("en-IN")
+  timezone      String    @default("Asia/Kolkata")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  profile       PatientProfile?
+  mealLogs      MealLog[]
+  insulinLogs   InsulinLog[]
+  cgmReadings   CGMReading[]
+  hypoPredictions HypoPrediction[]
+  hypoAlerts    HypoAlert[]
+
+  @@map("users")
+}
+
+model PatientProfile {
+  userId              String      @id @map("user_id")
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Demographics
+  dateOfBirth         DateTime    @map("date_of_birth")
+  gender              String
+  heightCm            Decimal?    @db.Decimal(5, 2) @map("height_cm")
+  weightKg            Decimal?    @db.Decimal(5, 2) @map("weight_kg")
+  diabetesType        DiabetesType @map("diabetes_type")
+  diagnosisDate       DateTime?   @map("diagnosis_date")
+
+  // Clinical
+  hba1cLatest         Decimal?    @db.Decimal(3, 1) @map("hba1c_latest")
+  hba1cDate           DateTime?   @map("hba1c_date")
+  insulinRegimen      InsulinRegimen @map("insulin_regimen")
+
+  // Insulin Parameters (U-100 assumed)
+  icrGPerU            Decimal?    @db.Decimal(5, 2) @map("icr_g_per_u")
+  isfMgDlPerU         Decimal?    @db.Decimal(5, 1) @map("isf_mg_dl_per_u")
+  targetGlucoseMgDl   Int         @default(110) @map("target_glucose_mg_dl")
+  basalRateUPerHr     Decimal?    @db.Decimal(4, 2) @map("basal_rate_u_per_hr")
+
+  // NPH/Regular doses
+  nphMorningU         Decimal?    @db.Decimal(4, 1) @map("nph_morning_u")
+  nphEveningU         Decimal?    @db.Decimal(4, 1) @map("nph_evening_u")
+  regularBreakfastU   Decimal?    @db.Decimal(4, 1) @map("regular_breakfast_u")
+  regularLunchU       Decimal?    @db.Decimal(4, 1) @map("regular_lunch_u")
+  regularDinnerU      Decimal?    @db.Decimal(4, 1) @map("regular_dinner_u")
+
+  // Device
+  cgmType             CGMType?    @map("cgm_type")
+  cgmSerialHash       String?     @map("cgm_serial_hash")
+  pumpType            String?     @map("pump_type")
+
+  // Preferences
+  hypoThresholdMgDl   Int         @default(70) @map("hypo_threshold_mg_dl")
+  severeHypoThresholdMgDl Int     @default(54) @map("severe_hypo_threshold_mg_dl")
+  alertSoundEnabled   Boolean     @default(true) @map("alert_sound_enabled")
+  caregiverShareEnabled Boolean   @default(false) @map("caregiver_share_enabled")
+
+  // Consent
+  dataSharingConsent  Boolean     @default(false) @map("data_sharing_consent")
+  researchConsent     Boolean     @default(false) @map("research_consent")
+  marketingConsent    Boolean     @default(false) @map("marketing_consent")
+
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  @@map("patient_profiles")
+}
+
+// ============================================
+// INDIAN FOOD DATABASE
+// ============================================
+
+model Food {
+  id              String   @id @default(uuid())
+  fdcId           Int?     @unique @map("fdc_id")
+  ninCode         String?  @unique @map("nin_code")
+  nameEn          String   @map("name_en")
+  nameHi          String?  @map("name_hi")
+  nameRegional    Json     @default("{}") @map("name_regional")
+  category        String
+  subcategory     String?
+  regionTags      String[] @default([]) @map("region_tags")
+
+  // Nutrition per 100g (edible portion)
+  energyKcal      Decimal? @db.Decimal(6, 2) @map("energy_kcal")
+  carbsG          Decimal  @db.Decimal(6, 2) @map("carbs_g")
+  proteinG        Decimal? @db.Decimal(6, 2) @map("protein_g")
+  fatG            Decimal? @db.Decimal(6, 2) @map("fat_g")
+  fiberG          Decimal? @db.Decimal(6, 2) @map("fiber_g")
+  sugarG          Decimal? @db.Decimal(6, 2) @map("sugar_g")
+  sodiumMg        Decimal? @db.Decimal(6, 2) @map("sodium_mg")
+  potassiumMg     Decimal? @db.Decimal(6, 2) @map("potassium_mg")
+
+  // Glycemic
+  glycemicIndex   Int?     @map("glycemic_index")
+  glycemicLoadPerServing Decimal? @db.Decimal(5, 2) @map("glycemic_load_per_serving")
+
+  // Portion reference
+  typicalServingG Decimal? @db.Decimal(7, 2) @map("typical_serving_g")
+  servingDescription String? @map("serving_description")
+  referenceObjects Json   @default("{}") @map("reference_objects")
+
+  // Preparation effects
+  prepMethods     Json     @default("{}") @map("prep_methods")
+
+  // Metadata
+  source          String
+  verifiedBy      String?  @map("verified_by")
+  verifiedAt      DateTime? @map("verified_at")
+  confidenceScore Decimal  @default(0.8) @db.Decimal(3, 2) @map("confidence_score")
+  isComposite     Boolean  @default(false) @map("is_composite")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  mealComponents  MealComponent[]
+
+  @@index([category])
+  @@index([regionTags])
+  @@map("foods")
+}
+
+model CompositeMeal {
+  id              String   @id @default(uuid())
+  nameEn          String   @map("name_en")
+  nameHi          String?  @map("name_hi")
+  nameRegional    Json     @default("{}") @map("name_regional")
+  description     String?
+  regionTags      String[] @default([]) @map("region_tags")
+  mealTypeTags    String[] @default([]) @map("meal_type_tags")
+  occasionTags    String[] @default([]) @map("occasion_tags")
+
+  // Components: array of {foodId, quantityG, prepMethod, notes}
+  components      Json
+
+  // Computed nutrition (per serving)
+  totalCarbsG     Decimal  @db.Decimal(7, 2) @map("total_carbs_g")
+  totalProteinG   Decimal? @db.Decimal(7, 2) @map("total_protein_g")
+  totalFatG       Decimal? @db.Decimal(7, 2) @map("total_fat_g")
+  totalFiberG     Decimal? @db.Decimal(7, 2) @map("total_fiber_g")
+  totalEnergyKcal Decimal? @db.Decimal(7, 2) @map("total_energy_kcal")
+  estimatedGi     Int?     @map("estimated_gi")
+  estimatedGl     Decimal? @db.Decimal(5, 2) @map("estimated_gl")
+  servings        Int      @default(1)
+
+  // Metadata
+  source          String?
+  verifiedBy      String?  @map("verified_by")
+  verifiedAt      DateTime? @map("verified_at")
+  confidenceScore Decimal  @default(0.75) @db.Decimal(3, 2) @map("confidence_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([regionTags])
+  @@index([mealTypeTags])
+  @@map("composite_meals")
+}
+
+// ============================================
+// MEAL LOGGING
+// ============================================
+
+model MealLog {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  loggedAt        DateTime @default(now()) @map("logged_at")
+  mealTime        DateTime @map("meal_time")
+  mealType        MealType @map("meal_type")
+  inputMethod     InputMethod @map("input_method")
+
+  // Items: [{foodId, name, quantityG, prepMethod, carbsG, proteinG, fatG, confidence}]
+  items           Json
+
+  // Totals
+  totalCarbsG     Decimal  @db.Decimal(7, 2) @map("total_carbs_g")
+  totalProteinG   Decimal? @db.Decimal(7, 2) @map("total_protein_g")
+  totalFatG       Decimal? @db.Decimal(7, 2) @map("total_fat_g")
+  totalFiberG     Decimal? @db.Decimal(7, 2) @map("total_fiber_g")
+
+  // Carb absorption profile (precomputed)
+  absorptionProfile Json?  @map("absorption_profile")
+
+  // Context
+  locationType    LocationType? @map("location_type")
+  hungerLevel     Int?     @map("hunger_level")
+  moodTag         String?  @map("mood_tag")
+  notes           String?
+
+  // Sync
+  syncedAt        DateTime? @map("synced_at")
+  clientId        String?  @map("client_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId, mealTime(sort: Desc)])
+  @@map("meal_logs")
+}
+
+// For querying individual food items in meal logs
+model MealComponent {
+  id        String @id @default(uuid())
+  foodId    String @map("food_id")
+  food      Food   @relation(fields: [foodId], references: [id])
+  mealLogId String @map("meal_log_id")
+  quantityG Decimal @db.Decimal(7, 2) @map("quantity_g")
+  prepMethod String? @map("prep_method")
+  carbsG    Decimal @db.Decimal(7, 2) @map("carbs_g")
+  proteinG  Decimal? @db.Decimal(7, 2) @map("protein_g")
+  fatG      Decimal? @db.Decimal(7, 2) @map("fat_g")
+
+  @@index([mealLogId])
+  @@map("meal_components")
+}
+
+// ============================================
+// INSULIN LOGGING
+// ============================================
+
+model InsulinLog {
+  id                  String      @id @default(uuid())
+  userId              String      @map("user_id")
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  loggedAt            DateTime    @default(now()) @map("logged_at")
+  administeredAt      DateTime    @map("administered_at")
+  insulinType         InsulinType @map("insulin_type")
+  doseU               Decimal     @db.Decimal(4, 2) @map("dose_u")
+  injectionSite       InjectionSite @map("injection_site")
+
+  // Context
+  relatedMealLogId    String?     @map("related_meal_log_id")
+  relatedMealLog      MealLog?    @relation(fields: [relatedMealLogId], references: [id], onDelete: SetNull)
+  glucoseAtInjection  Int?        @map("glucose_at_injection")
+  carbEstimateG       Decimal?    @db.Decimal(6, 2) @map("carb_estimate_g")
+  calculatorRecommendedU Decimal? @db.Decimal(4, 2) @map("calculator_recommended_u")
+  overrideReason      String?     @map("override_reason")
+
+  // Device
+  deliveryMethod      DeliveryMethod @map("delivery_method")
+  deviceId            String?     @map("device_id")
+
+  // Sync
+  syncedAt            DateTime?   @map("synced_at")
+  clientId            String?     @map("client_id")
+  createdAt           DateTime    @default(now()) @map("created_at")
+
+  @@index([userId, administeredAt(sort: Desc)])
+  @@index([relatedMealLogId])
+  @@map("insulin_logs")
+}
+
+// ============================================
+// CGM READINGS (TimescaleDB Hypertable)
+// ============================================
+
+model CGMReading {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  time            DateTime @db.Timestamptz(6)
+  glucoseMgDl     Int      @map("glucose_mg_dl")
+  trend           Int?     // -3 to +3 (Dexcom scale)
+  trendArrow      String?  @map("trend_arrow")
+
+  // Quality
+  isValid         Boolean  @default(true) @map("is_valid")
+  noiseLevel      String?  @map("noise_level")
+  signalLoss      Boolean  @default(false) @map("signal_loss")
+
+  // Source
+  source          CGMSource
+  deviceTimestamp DateTime? @map("device_timestamp")
+
+  // Metadata
+  clientId        String?  @map("client_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId, time(sort: Desc)])
+  @@index([userId, time(sort: Desc), isValid])
+  @@map("cgm_readings")
+}
+
+// ============================================
+// HYPOGLYCEMIA PREDICTIONS & ALERTS
+// ============================================
+
+model HypoPrediction {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  predictedAt         DateTime @map("predicted_at")
+  predictionHorizonMin Int     @map("prediction_horizon_min")
+
+  // Model output (quantile regression)
+  glucoseP10          Int?     @map("glucose_p10")
+  glucoseP50          Int?     @map("glucose_p50")
+  glucoseP90          Int?     @map("glucose_p90")
+  hypoProbability     Decimal  @db.Decimal(4, 3) @map("hypo_probability")
+  severeHypoProbability Decimal @db.Decimal(4, 3) @map("severe_hypo_probability")
+
+  // Explainability
+  topFeatures         Json?    @map("top_features")
+  modelVersion        String   @map("model_version")
+
+  // Outcome (filled later via background job)
+  actualGlucose30min  Int?     @map("actual_glucose_30min")
+  actualGlucose60min  Int?     @map("actual_glucose_60min")
+  wasHypo30min        Boolean? @map("was_hypo_30min")
+  wasHypo60min        Boolean? @map("was_hypo_60min")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@index([userId, predictedAt(sort: Desc)])
+  @@map("hypo_predictions")
+}
+
+model HypoAlert {
+  id                    String   @id @default(uuid())
+  userId                String   @map("user_id")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  predictionId          String?  @map("prediction_id")
+  prediction            HypoPrediction? @relation(fields: [predictionId], references: [id], onDelete: SetNull)
+
+  triggeredAt           DateTime @default(now()) @map("triggered_at")
+  alertLevel            AlertLevel @map("alert_level")
+  message               String
+  recommendedAction     String?  @map("recommended_action")
+  indianCarbOptions     Json?    @map("indian_carb_options")
+
+  acknowledgedAt        DateTime? @map("acknowledged_at")
+  dismissedAt           DateTime? @map("dismissed_at")
+  dismissReason         String?  @map("dismiss_reason")
+  escalatedToCaregiverAt DateTime? @map("escalated_to_caregiver_at")
+
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  @@index([userId, triggeredAt(sort: Desc)])
+  @@map("hypo_alerts")
+}
+
+// ============================================
+// MODEL ARTIFACTS & VERSIONING
+// ============================================
+
+model MLModel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  version     String
+  type        String   // "hypo_prediction", "carb_estimation", "insulin_dosing"
+  framework   String   // "pytorch", "onnx", "tensorflow"
+  uri         String   // S3/GCS path
+  metrics     Json     // Validation metrics
+  status      String   @default("staging") // "staging", "production", "archived"
+  deployedAt  DateTime? @map("deployed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([name, version])
+  @@map("ml_models")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  resourceType String @map("resource_type")
+  resourceId String? @map("resource_id")
+  ip        String?
+  userAgent String?  @map("user_agent")
+  method    String
+  path      String
+  status    String
+  durationMs Float?  @map("duration_ms")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
