@@ -1,0 +1,71 @@
+# ML Training Dockerfile
+# Multi-stage build for TFT training
+
+# ============================================
+# BASE STAGE - Conda environment
+# ============================================
+FROM continuumio/miniconda3:23.5.2-0 AS base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    wget \
+    build-essential \
+    cmake \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libglib2.0-0 \
+    libgl1-mesa-glx \
+    libgomp1 \
+    tesseract-ocr \
+    tesseract-ocr-hin \
+    tesseract-ocr-eng \
+    libtesseract-dev \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create conda environment
+COPY conda.yaml /tmp/conda.yaml
+RUN conda env create -f /tmp/conda.yaml && conda clean -afy
+
+# Activate conda environment
+ENV PATH="/opt/conda/envs/t1d-ml/bin:$PATH"
+ENV CONDA_DEFAULT_ENV="t1d-ml"
+
+# ============================================
+# BUILD STAGE - Install Python packages
+# ============================================
+FROM base AS builder
+
+WORKDIR /app
+
+# Copy project files
+COPY . /app
+
+# Install Python packages in development mode
+RUN pip install -e .[dev]
+
+# ============================================
+# TRAINING STAGE - Final training image
+# ============================================
+FROM base AS training
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /opt/conda/envs/t1d-ml /opt/conda/envs/t1d-ml
+
+# Copy source code
+COPY --from=builder /app /app
+
+# Set environment
+ENV PYTHONPATH="/app:$PYTHONPATH"
+ENV MLFLOW_TRACKING_URI="http://mlflow:5000"
+ENV PYTHONUNBUFFERED=1
+
+# Default command
+ENTRYPOINT ["python", "-m", "apps.ml_service.src.training.run_training"]
+CMD ["--help"]

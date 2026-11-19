@@ -1,0 +1,136 @@
+# MLflow Experiment Configuration for T1D Hypoglycemia Prediction
+
+experiment:
+  name: "t1d-hypo-prediction"
+  artifact_location: "s3://t1d-mlflow-artifacts"
+  tags:
+    project: "t1d-india"
+    task: "hypoglycemia-prediction"
+    population: "indian-t1d"
+    model_type: "temporal-fusion-transformer"
+
+model:
+  name: "tft_hypo_predictor"
+  framework: "pytorch"
+  version: "1.0.0"
+  
+  architecture:
+    type: "TemporalFusionTransformer"
+    hidden_size: 256
+    lstm_layers: 2
+    attention_heads: 4
+    dropout: 0.1
+    hidden_continuous_size: 64
+    quantiles: [0.1, 0.5, 0.9]
+    prediction_horizons: [30, 60]  # minutes
+    
+  input_features:
+    time_varying_known_reals: 8
+    time_varying_unknown_reals: 12
+    static_categorical: 4
+    static_reals: 12
+    sequence_length: 6  # 30 min at 5-min intervals
+    
+  training:
+    batch_size: 64
+    learning_rate: 0.001
+    max_epochs: 100
+    early_stopping_patience: 10
+    gradient_clip_val: 1.0
+    optimizer: "adamw"
+    weight_decay: 1e-4
+    scheduler: "reduce_lr_on_plateau"
+    scheduler_patience: 5
+    scheduler_factor: 0.5
+    
+  loss:
+    type: "combined"
+    quantile_loss_weight: 0.7
+    classification_loss_weight: 0.3
+    quantiles: [0.1, 0.5, 0.9]
+    classification_pos_weight: 10.0
+    
+  validation:
+    metrics:
+      - "sensitivity_30min"
+      - "specificity_30min"
+      - "sensitivity_60min"
+      - "specificity_60min"
+      - "mae_30min"
+      - "mae_60min"
+      - "coverage_30min"
+      - "coverage_60min"
+    target_sensitivity_30min: 0.91
+    target_specificity_30min: 0.90
+
+data:
+  source: "synthetic_data"
+  synthetic_ratio: 0.3
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  split_strategy: "patient_wise"  # No data leakage
+  cv_strategy: "leave_one_patient_out"
+  
+  features:
+    time_varying_unknown:
+      - "glucose"
+      - "roc"
+      - "roc_5min_ago"
+      - "accel"
+      - "carb_absorbing_rapid"
+      - "carb_absorbing_intermediate"
+      - "carb_absorbing_slow"
+      - "meal_type_id"
+    
+    time_varying_known:
+      - "iob_rapid"
+      - "iob_regular"
+      - "iob_nph"
+      - "insulin_rate_rapid"
+      - "insulin_rate_regular"
+      - "insulin_rate_nph"
+      - "carbs_absorbing"
+      - "steps_5min"
+      - "hr"
+    
+    static_categorical:
+      - "regimen_type"
+      - "sex"
+      - "cgm_type"
+      - "insulin_type"
+    
+    static_real:
+      - "age"
+      - "weight"
+      - "diabetes_duration_years"
+      - "isf"
+      - "icr"
+      - "target_glucose"
+      - "hypo_unawareness"
+      - "height"
+      - "bmi"
+      - "basal_rate"
+      - "nph_morning"
+      - "nph_evening"
+  
+  preprocessing:
+    resample_freq: "5min"
+    max_gap_min: 15
+    lookback_window: "30min"
+    prediction_horizons: [30, 60]
+    target_glucose_col: "glucose_mg_dl"
+    hypo_threshold: 70
+    severe_hypo_threshold: 54
+
+deployment:
+  model_format: "onnx"
+  onnx_opset: 14
+  serving:
+    platform: "fastapi"
+    batch_size: 32
+    max_latency_ms: 100
+  monitoring:
+    drift_detection: true
+    performance_threshold: 0.85
+    retrain_trigger: "sensitivity_drop_5_percent"
