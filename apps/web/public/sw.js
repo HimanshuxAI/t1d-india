@@ -1,66 +1,19 @@
-/**
- * Service Worker for T1D India - Offline-First PWA
- * Caches app shell, API responses, and enables background sync
- */
-
-const CACHE_NAME = 't1d-india-v1';
-const STATIC_CACHE = 't1d-static-v1';
-const API_CACHE = 't1d-api-v1';
-const IMAGE_CACHE = 't1d-images-v1';
-
-// Files to cache immediately (app shell)
-const STATIC_ASSETS = [
-  '/',
-  '/dashboard',
-  '/meals',
-  '/cgm',
-  '/insulin',
-  '/profile',
-  '/settings',
-  '/foods',
-  '/manifest.json',
-  // Add other critical static assets
-];
-
-// API endpoints to cache for offline use
-const API_PATTERNS = [
-  /^\/api\/v1\/foods\/search/,
-  /^\/api\/v1\/foods\/composite/,
-  /^\/api\/v1\/profile/,
-  /^\/api\/v1\/meals$/,
-  /^\/api\/v1\/insulin\/summary/,
-];
-
-// Install event - cache app shell
+// Clean up all caches and pass through for development
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('[SW] Caching app shell');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => self.skipWaiting())
+    caches.keys().then((names) => {
+      return Promise.all(names.map((name) => caches.delete(name)));
+    }).then(() => self.clients.claim())
   );
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((name) => {
-              return name !== STATIC_CACHE &&
-                     name !== API_CACHE &&
-                     name !== IMAGE_CACHE &&
-                     name !== CACHE_NAME;
-            })
-            .map((name) => caches.delete(name))
-        );
-      })
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('fetch', (event) => {
+  // Always fetch fresh from network
+  event.respondWith(fetch(event.request));
 });
 
 // Fetch event - serve from cache, fallback to network

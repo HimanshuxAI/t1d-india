@@ -5,6 +5,13 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@t1d-india/shared', 'lucide-react'],
   },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src'),
+    };
+    return config;
+  },
   images: {
     domains: ['localhost', 'api.t1d-india.example.com'],
     remotePatterns: [

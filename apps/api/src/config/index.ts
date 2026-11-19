@@ -1,7 +1,12 @@
 // API Configuration
 
 import { config } from 'dotenv';
-config();
+import { resolve } from 'path';
+
+// Load apps/api/.env if present, then the monorepo root .env.
+config({
+  path: [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../../.env')],
+});
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -17,6 +22,8 @@ export const env = {
 
   // JWT
   JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-change-in-production',
+  // Fixed demo patient id used by the dev auth fallback and demo seed
+  DEMO_USER_ID: process.env.DEMO_USER_ID || '00000000-0000-4000-8000-000000000001',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Clock, Utensils, ChevronRight } from 'lucide-react';
+import { Clock, Utensils, ChevronRight, Camera, Mic2, Layers, Edit3 } from 'lucide-react';
 import Link from 'next/link';
 
 interface Meal {
@@ -27,22 +27,11 @@ interface RecentMealsProps {
 export function RecentMeals({ meals = [], isLoading = false }: RecentMealsProps) {
   if (isLoading) {
     return (
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Recent Meals</h3>
-        </div>
-        <div className="card-content">
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="card p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-5 bg-[#FAF4E8] dark:bg-[#2A2536] rounded w-1/4" />
+          <div className="h-16 bg-[#FAF4E8] dark:bg-[#2A2536] rounded-xl" />
+          <div className="h-16 bg-[#FAF4E8] dark:bg-[#2A2536] rounded-xl" />
         </div>
       </div>
     );
@@ -50,111 +39,120 @@ export function RecentMeals({ meals = [], isLoading = false }: RecentMealsProps)
 
   if (meals.length === 0) {
     return (
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Recent Meals</h3>
+      <div className="card p-6 text-center py-8 bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10">
+        <div className="w-12 h-12 rounded-2xl bg-[#FAF4E8] dark:bg-[#1A1622] text-[#2A3F8F] dark:text-[#7F93E6] flex items-center justify-center mx-auto mb-3">
+          <Utensils className="w-6 h-6" />
         </div>
-        <div className="card-content text-center py-8">
-          <Utensils className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-muted-foreground">No meals logged yet</p>
-          <Link href="/meals/new" className="mt-4 inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:underline">
-            Log your first meal
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <p className="font-serif font-bold text-base text-[#231F2B] dark:text-[#F3EEE4]">
+          No meals recorded yet
+        </p>
+        <p className="text-xs text-[#5C5665] dark:text-[#8C8496] mt-1">
+          Log breakfast, lunch, or a desi snack to see carb breakdowns
+        </p>
+        <Link href="/meals/new" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#2A3F8F] dark:text-[#7F93E6] hover:underline">
+          Record your first meal
+          <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
     );
   }
 
-  const getMealTypeColor = (type: string) => {
+  const getMealTypeStyle = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'breakfast': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'lunch': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
-      case 'dinner': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-      case 'snack': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+      case 'breakfast':
+        return { label: 'नाश्ता · Breakfast', badge: 'bg-[#E8A33D]/10 text-[#A45D18] border-[#E8A33D]/30' };
+      case 'lunch':
+        return { label: 'दोपहर · Lunch', badge: 'bg-[#2E8B57]/10 text-[#2E8B57] border-[#2E8B57]/30' };
+      case 'dinner':
+        return { label: 'रात · Dinner', badge: 'bg-[#2A3F8F]/10 text-[#2A3F8F] dark:text-[#7F93E6] border-[#2A3F8F]/30' };
+      case 'snack':
+        return { label: 'शाम · Snack', badge: 'bg-[#E0527F]/10 text-[#E0527F] border-[#E0527F]/30' };
+      default:
+        return { label: type, badge: 'bg-[#FAF4E8] text-[#231F2B] border-[#231F2B]/20' };
     }
   };
 
-  const getInputMethodIcon = (method: string) => {
+  const renderInputIcon = (method: string) => {
     switch (method) {
       case 'PHOTO_ML':
       case 'PHOTO_OCR':
-        return '📷';
+        return <Camera className="w-4 h-4 text-[#E0527F]" />;
       case 'VOICE':
-        return '🎤';
+        return <Mic2 className="w-4 h-4 text-[#E8A33D]" />;
       case 'COMPOSITE_SELECT':
-        return '🍽️';
+        return <Layers className="w-4 h-4 text-[#2A3F8F] dark:text-[#7F93E6]" />;
       default:
-        return '✏️';
+        return <Edit3 className="w-4 h-4 text-[#2E8B57]" />;
     }
   };
 
   return (
-    <div className="card">
-      <div className="card-header flex flex-row items-center justify-between">
+    <div className="card p-6 sm:p-7 bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 shadow-[0_2px_12px_rgba(35,31,43,0.04)]">
+      <div className="flex items-center justify-between pb-4 border-b border-[#231F2B]/[0.08] dark:border-white/[0.08]">
         <div>
-          <h3 className="card-title">Recent Meals</h3>
-          <p className="card-description">Your latest meal logs</p>
+          <h3 className="font-serif font-bold text-xl text-[#231F2B] dark:text-[#F3EEE4]">
+            Recent Indian Meals
+          </h3>
+          <p className="text-xs text-[#5C5665] dark:text-[#8C8496]">Past carbs & absorption timelines</p>
         </div>
-        <Link href="/meals/history" className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
-          View all
-          <ChevronRight className="w-4 h-4" />
+        <Link
+          href="/meals/history"
+          className="text-xs font-bold text-[#2A3F8F] dark:text-[#7F93E6] hover:underline flex items-center gap-1"
+        >
+          View all 4 meals
+          <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <div className="card-content">
-        <div className="space-y-3">
-          {meals.slice(0, 5).map((meal) => (
+
+      <div className="mt-4 space-y-3">
+        {meals.slice(0, 4).map((meal) => {
+          const typeStyle = getMealTypeStyle(meal.mealType);
+          return (
             <Link
               key={meal.id}
               href={`/meals/${meal.id}`}
-              className={cn(
-                'flex items-center gap-4 p-3 rounded-lg border border-gray-100 dark:border-gray-800',
-                'hover:border-primary-200 dark:hover:border-primary-800',
-                'hover:bg-gray-50 dark:hover:bg-gray-800/50',
-                'transition-colors group'
-              )}
+              className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#FAF4E8]/50 dark:bg-[#1A1622]/50 border border-[#231F2B]/[0.08] dark:border-white/[0.08] hover:border-[#2A3F8F]/40 hover:bg-[#FAF4E8] dark:hover:bg-[#1A1622] transition-all group"
             >
-              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <span className="text-xl">{getInputMethodIcon(meal.inputMethod)}</span>
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 flex items-center justify-center shrink-0 shadow-xs">
+                {renderInputIcon(meal.inputMethod)}
               </div>
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={cn(
-                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                    getMealTypeColor(meal.mealType)
-                  )}>
-                    {meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)}
+                  <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-bold border tracking-wider', typeStyle.badge)}>
+                    {typeStyle.label}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-[#5C5665] dark:text-[#8C8496]">
                     {new Date(meal.mealTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-1 text-sm text-gray-600 dark:text-gray-400 truncate">
+
+                <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-[#231F2B]/85 dark:text-[#F3EEE4]/85 truncate">
                   {meal.items.slice(0, 3).map((item, i) => (
                     <span key={i} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-muted-foreground">,</span>}
+                      {i > 0 && <span className="text-[#8C8496]">·</span>}
                       <span>{item.name}</span>
-                      <span className="text-muted-foreground">({Math.round(item.carbsG)}g)</span>
+                      <span className="text-[11px] text-[#5C5665] dark:text-[#8C8496]">({Math.round(item.carbsG)}g)</span>
                     </span>
                   ))}
                   {meal.items.length > 3 && (
-                    <span className="text-muted-foreground">+{meal.items.length - 3} more</span>
+                    <span className="text-[11px] text-[#5C5665] dark:text-[#8C8496]">+{meal.items.length - 3} more</span>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-right">
+
+              <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  <span className="font-serif font-black text-xl text-[#231F2B] dark:text-[#F3EEE4]">
                     {Math.round(meal.totalCarbsG)}g
-                  </p>
-                  <p className="text-xs text-muted-foreground">carbs</p>
+                  </span>
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-[#5C5665] dark:text-[#8C8496]">carbs</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-[#8C8496] group-hover:text-[#2A3F8F] group-hover:translate-x-0.5 transition-all" />
               </div>
             </Link>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );

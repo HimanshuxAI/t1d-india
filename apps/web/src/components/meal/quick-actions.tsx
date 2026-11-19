@@ -6,10 +6,15 @@ import {
   Camera,
   Mic2,
   Search,
-  Plus,
+  Sparkles,
   Clock,
-  Calendar,
-  BarChart2,
+  Layers,
+  Heart,
+  ChevronRight,
+  Soup,
+  Coffee,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,157 +28,183 @@ export function QuickActions({ onLogMeal, onVoiceLog, onPhotoLog }: QuickActions
   const actions = [
     {
       label: 'Log Meal',
-      description: 'Search and log food',
+      badge: 'Thali & Roti',
+      description: 'Search & count carbs',
       icon: Utensils,
-      color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+      bg: 'bg-[#2A3F8F] text-[#FAF4E8] hover:bg-[#223273]',
+      accentBg: 'bg-white/20 text-white',
       href: '/meals/new',
       onClick: onLogMeal,
     },
     {
-      label: 'Photo Log',
-      description: 'Snap a picture of your plate',
+      label: 'Photo Plate Log',
+      badge: 'Camera',
+      description: 'Snap your food plate',
       icon: Camera,
-      color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      bg: 'bg-[#E0527F] text-white hover:bg-[#C93665]',
+      accentBg: 'bg-white/20 text-white',
       href: '/meals/photo',
       onClick: onPhotoLog,
     },
     {
       label: 'Voice Log',
-      description: 'Speak your meal in Hindi/English',
+      badge: 'Hindi / Eng',
+      description: '"2 roti, 1 katori dal"',
       icon: Mic2,
-      color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+      bg: 'bg-[#E8A33D] text-white hover:bg-[#CB8020]',
+      accentBg: 'bg-white/20 text-white',
       href: '/meals/voice',
       onClick: onVoiceLog,
     },
     {
-      label: 'Search Foods',
-      description: 'Browse 500+ Indian foods',
+      label: 'Food Database',
+      badge: '500+ Desi',
+      description: 'ICMR nutrition data',
       icon: Search,
-      color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      bg: 'bg-[#2E8B57] text-white hover:bg-[#256F45]',
+      accentBg: 'bg-white/20 text-white',
       href: '/foods',
     },
   ];
 
-  const shortcuts = [
+  const mealShortcuts = [
     {
-      label: 'Breakfast',
-      icon: Utensils,
-      mealType: 'breakfast',
+      label: 'नाश्ता · Breakfast',
+      sub: 'Poha, Idli, Paratha',
+      time: '08:00 - 10:00',
+      icon: Coffee,
+      type: 'BREAKFAST',
     },
     {
-      label: 'Lunch',
-      icon: Utensils,
-      mealType: 'lunch',
+      label: 'दोपहर · Lunch',
+      sub: 'Dal, Roti, Sabzi, Rice',
+      time: '12:30 - 14:30',
+      icon: Sun,
+      type: 'LUNCH',
     },
     {
-      label: 'Dinner',
-      icon: Utensils,
-      mealType: 'dinner',
+      label: 'शाम · Tea & Snack',
+      sub: 'Roasted Chana, Chaas',
+      time: '17:00 - 18:30',
+      icon: Soup,
+      type: 'SNACK',
     },
     {
-      label: 'Snack',
-      icon: Utensils,
-      mealType: 'snack',
+      label: 'रात · Dinner',
+      sub: 'Khichdi, Roti, Sambar',
+      time: '20:00 - 21:30',
+      icon: Moon,
+      type: 'DINNER',
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Main actions */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Quick Actions</h3>
-          <p className="card-description">Log your meals fast</p>
-        </div>
-        <div className="card-content">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {actions.map((action) => (
-              <Link
-                key={action.label}
-                href={action.href}
-                className={cn(
-                  'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
-                  'hover:border-primary-300 dark:hover:border-primary-700',
-                  action.color
-                )}
-              >
-                <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', action.color.replace('text-', 'bg-').replace('dark:bg-', 'dark:bg-').replace('dark:text-', ''))}>
-                  <action.icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white text-center">{action.label}</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">{action.description}</p>
-              </Link>
-            ))}
+      {/* Primary Intake Card */}
+      <div className="card p-6 bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 shadow-[0_2px_12px_rgba(35,31,43,0.04)]">
+        <div className="flex items-center justify-between pb-4 border-b border-[#231F2B]/[0.08] dark:border-white/[0.08]">
+          <div>
+            <h3 className="font-serif font-bold text-xl text-[#231F2B] dark:text-[#F3EEE4]">
+              Aaj Meal Mein Kya Tha?
+            </h3>
+            <p className="text-xs text-[#5C5665] dark:text-[#8C8496]">Quick meal & Indian carb counting</p>
           </div>
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md bg-[#FAF4E8] dark:bg-[#1A1622] text-[#2A3F8F] dark:text-[#7F93E6] border border-[#231F2B]/10">
+            Bolus Calculator
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          {actions.map((action) => (
+            <Link
+              key={action.label}
+              href={action.href}
+              className={cn(
+                'group p-4 rounded-2xl flex flex-col justify-between transition-all duration-150 shadow-xs hover:shadow hover:-translate-y-0.5',
+                action.bg
+              )}
+            >
+              <div className="flex items-start justify-between">
+                <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', action.accentBg)}>
+                  <action.icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-white/20">
+                  {action.badge}
+                </span>
+              </div>
+              <div className="mt-3">
+                <p className="font-serif font-bold text-base leading-snug">{action.label}</p>
+                <p className="text-[11px] opacity-90 mt-0.5">{action.description}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Meal type shortcuts */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Log by Meal Type</h3>
-          <p className="card-description">One-tap logging for common meals</p>
+      {/* Routine Meal Slots */}
+      <div className="card p-6 bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 shadow-[0_2px_12px_rgba(35,31,43,0.04)]">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#231F2B]/[0.08] dark:border-white/[0.08]">
+          <h4 className="font-serif font-bold text-base text-[#231F2B] dark:text-[#F3EEE4]">
+            Log by Meal Slot
+          </h4>
+          <span className="text-[11px] text-[#5C5665] dark:text-[#8C8496]">One-tap desi templates</span>
         </div>
-        <div className="card-content">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {shortcuts.map((shortcut) => (
-              <button
-                key={shortcut.mealType}
-                className={cn(
-                  'flex flex-col items-center gap-1.5 p-3 rounded-lg border border-gray-200 dark:border-gray-700',
-                  'hover:border-primary-300 dark:hover:border-primary-700',
-                  'hover:bg-primary-50 dark:hover:bg-primary-900/30',
-                  'transition-colors text-left'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <shortcut.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                  <span className="font-medium text-sm">{shortcut.label}</span>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {mealShortcuts.map((meal) => (
+            <Link
+              key={meal.type}
+              href={`/meals/new?type=${meal.type}`}
+              className="p-3 rounded-xl bg-[#FAF4E8]/70 dark:bg-[#1A1622]/70 border border-[#231F2B]/10 dark:border-white/10 hover:border-[#2A3F8F]/40 dark:hover:border-[#7F93E6]/40 hover:bg-[#FAF4E8] dark:hover:bg-[#1A1622] transition-colors flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 flex items-center justify-center text-[#2A3F8F] dark:text-[#7F93E6]">
+                  <meal.icon className="w-4 h-4" />
                 </div>
-                <p className="text-xs text-muted-foreground">Tap to log {shortcut.mealType}</p>
-              </button>
-            ))}
-          </div>
+                <div>
+                  <p className="font-bold text-xs text-[#231F2B] dark:text-[#F3EEE4] group-hover:text-[#2A3F8F] transition-colors">
+                    {meal.label}
+                  </p>
+                  <p className="text-[10px] text-[#5C5665] dark:text-[#8C8496]">{meal.sub}</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#8C8496] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Utility links */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">More Tools</h3>
-        </div>
-        <div className="card-content">
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/meals/history" className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-              <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              <div>
-                <p className="font-medium text-sm">Meal History</p>
-                <p className="text-xs text-muted-foreground">View past meals & carbs</p>
-              </div>
-            </Link>
-            <Link href="/meals/analytics" className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-              <BarChart2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              <div>
-                <p className="font-medium text-sm">Meal Analytics</p>
-                <p className="text-xs text-muted-foreground">Carb trends & patterns</p>
-              </div>
-            </Link>
-            <Link href="/foods/favorites" className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-              <Utensils className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              <div>
-                <p className="font-medium text-sm">Favorite Foods</p>
-                <p className="text-xs text-muted-foreground">Quick access to your foods</p>
-              </div>
-            </Link>
-            <Link href="/foods/composite" className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-              <Calendar className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              <div>
-                <p className="font-medium text-sm">Composite Meals</p>
-                <p className="text-xs text-muted-foreground">Thali, dosa-sambar, etc.</p>
-              </div>
-            </Link>
+      {/* Helpful Desi T1D Navigation Tools */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/foods/composite"
+          className="p-4 rounded-2xl bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 hover:border-[#2A3F8F]/30 shadow-xs hover:shadow-sm transition-all group"
+        >
+          <div className="w-8 h-8 rounded-xl bg-[#FAF4E8] dark:bg-[#1A1622] text-[#2A3F8F] dark:text-[#7F93E6] flex items-center justify-center mb-2">
+            <Layers className="w-4 h-4" />
           </div>
-        </div>
+          <p className="font-serif font-bold text-sm text-[#231F2B] dark:text-[#F3EEE4] group-hover:text-[#2A3F8F] transition-colors">
+            Composite Thali
+          </p>
+          <p className="text-[11px] text-[#5C5665] dark:text-[#8C8496] mt-0.5">
+            Auto-split mixed meals
+          </p>
+        </Link>
+
+        <Link
+          href="/meals/history"
+          className="p-4 rounded-2xl bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 hover:border-[#2A3F8F]/30 shadow-xs hover:shadow-sm transition-all group"
+        >
+          <div className="w-8 h-8 rounded-xl bg-[#FAF4E8] dark:bg-[#1A1622] text-[#E0527F] flex items-center justify-center mb-2">
+            <Clock className="w-4 h-4" />
+          </div>
+          <p className="font-serif font-bold text-sm text-[#231F2B] dark:text-[#F3EEE4] group-hover:text-[#E0527F] transition-colors">
+            Meal History
+          </p>
+          <p className="text-[11px] text-[#5C5665] dark:text-[#8C8496] mt-0.5">
+            4 seeded meals & carbs
+          </p>
+        </Link>
       </div>
     </div>
   );

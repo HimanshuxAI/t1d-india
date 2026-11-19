@@ -17,19 +17,23 @@ declare module 'fastify' {
 }
 
 const authPlugin: FastifyPluginAsync = async (app) => {
-  // Register JWT
-  await app.register(import('@fastify/jwt'), {
-    secret: env.JWT_SECRET,
-    sign: {
-      expiresIn: env.JWT_EXPIRES_IN,
-    },
-    verify: {
-      algorithms: ['HS256'],
-    },
-  });
+  // Check if JWT is already registered to avoid duplicate registration
+  if (!app.hasDecorator('jwt')) {
+    await app.register(import('@fastify/jwt'), {
+      secret: env.JWT_SECRET,
+      sign: {
+        expiresIn: env.JWT_EXPIRES_IN,
+      },
+      verify: {
+        algorithms: ['HS256'],
+      },
+    });
+  }
 
-  // Decorate request with user
-  app.decorateRequest('user', null);
+  // Decorate request with user - only if not already decorated
+  if (!app.hasRequestDecorator('user')) {
+    app.decorateRequest('user', null);
+  }
 
   // Authentication hook
   app.addHook('preHandler', async (request, reply) => {
@@ -44,6 +48,19 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     ];
 
     if (publicPaths.some((p) => request.url.startsWith(p))) {
+      return;
+    }
+
+    // Demo fallback (dev only): requests without an Authorization header act as
+    // the seeded demo patient so the app runs end-to-end without Clerk.
+    const hasAuthHeader = Boolean(request.headers.authorization);
+    if (env.NODE_ENV !== 'production' && !hasAuthHeader) {
+      request.user = {
+        id: env.DEMO_USER_ID,
+        clerkId: 'demo',
+        email: 'demo@t1d-india.app',
+        role: UserRole.PATIENT,
+      };
       return;
     }
 
@@ -68,23 +85,25 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   });
 
   // Role-based access control
-  app.decorate('requireRole', (...roles: UserRole[]) => {
-    return async (request: FastifyRequest, reply: FastifyReply) => {
-      if (!request.user) {
-        return reply.code(401).send({
-          error: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        });
-      }
+  if (!app.hasDecorator('requireRole')) {
+    app.decorate('requireRole', (...roles: UserRole[]) => {
+      return async (request: FastifyRequest, reply: FastifyReply) => {
+        if (!request.user) {
+          return reply.code(401).send({
+            error: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          });
+        }
 
-      if (!roles.includes(request.user.role)) {
-        return reply.code(403).send({
-          error: 'FORBIDDEN',
-          message: 'Insufficient permissions',
-        });
-      }
-    };
-  });
+        if (!roles.includes(request.user.role)) {
+          return reply.code(403).send({
+            error: 'FORBIDDEN',
+            message: 'Insufficient permissions',
+          });
+        }
+      };
+    });
+  };
 };
 
 export default fp(authPlugin);

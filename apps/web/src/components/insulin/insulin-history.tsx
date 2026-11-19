@@ -5,9 +5,8 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { cn, formatTimeAgo } from '@/lib/utils';
 import {
   Syringe, Pill, Droplet, Calendar, Filter, ChevronDown,
-  Download, RefreshCw, Clock, MapPin, Trash2, Edit
+  Download, RefreshCw, Clock, MapPin, Trash2, Edit, AlertTriangle, Utensils
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface InsulinLog {
   id: string;
@@ -107,17 +106,6 @@ export function InsulinHistory({ initialFilters }: InsulinHistoryProps) {
       'PUMP_SITE': 'Pump Site',
     };
     return labels[site] || site;
-  };
-
-  const getSiteIcon = (site: string) => {
-    const icons: Record<string, string> = {
-      'ABDOMEN': '🫃',
-      'THIGH': '🦵',
-      'ARM': '💪',
-      'BUTTOCK': '🍑',
-      'PUMP_SITE': '📍',
-    };
-    return icons[site] || '📍';
   };
 
   if (isLoading) {
@@ -266,7 +254,7 @@ export function InsulinHistory({ initialFilters }: InsulinHistoryProps) {
                 >
                   {isFetchingNextPage ? 'Loading...' : 'Load More'}
                 </button>
-              )}
+              </div>
             )}
           </>
         )}
@@ -328,27 +316,27 @@ function InsulinLogRow({ log }: { log: InsulinLog }) {
 
           {/* Details */}
           <div className="mt-2 flex flex-wrap gap-4 text-sm">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <span>📍</span> {log.injectionSite.charAt(0) + log.injectionSite.slice(1).toLowerCase()}
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin className="w-3.5 h-3.5 text-muted-foreground" /> {log.injectionSite.charAt(0) + log.injectionSite.slice(1).toLowerCase()}
             </span>
             {log.deliveryMethod && (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <span>💉</span> {log.deliveryMethod.charAt(0) + log.deliveryMethod.slice(1).toLowerCase()}
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Syringe className="w-3.5 h-3.5 text-muted-foreground" /> {log.deliveryMethod.charAt(0) + log.deliveryMethod.slice(1).toLowerCase()}
               </span>
             )}
             {log.glucoseAtInjection && (
-              <span className="flex items-center gap-1">
-                <span>🩸</span> {log.glucoseAtInjection} mg/dL
+              <span className="flex items-center gap-1.5">
+                <Droplet className="w-3.5 h-3.5 text-[#2E8B57]" /> {log.glucoseAtInjection} mg/dL
               </span>
             )}
             {log.carbEstimateG && (
-              <span className="flex items-center gap-1">
-                <span>🍽️</span> ~{Math.round(log.carbEstimateG)}g carbs
+              <span className="flex items-center gap-1.5">
+                <Utensils className="w-3.5 h-3.5 text-muted-foreground" /> ~{Math.round(log.carbEstimateG)}g carbs
               </span>
             )}
             {log.calculatorRecommendedU && log.calculatorRecommendedU !== log.doseU && (
-              <span className="flex items-center gap-1 text-orange-600">
-                <span>⚠️</span> Calculator: {log.calculatorRecommendedU.toFixed(1)}U
+              <span className="flex items-center gap-1.5 text-orange-600">
+                <AlertTriangle className="w-3.5 h-3.5 text-orange-600" /> Calculator: {log.calculatorRecommendedU.toFixed(1)}U
               </span>
             )}
             {log.overrideReason && (
@@ -359,9 +347,9 @@ function InsulinLogRow({ log }: { log: InsulinLog }) {
           </div>
 
           {log.relatedMealLog && (
-            <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="mt-2 p-2 bg-[#FAF4E8] dark:bg-[#1E1926] rounded-lg border border-[#231F2B]/10 dark:border-white/10">
               <div className="flex items-center gap-2 text-sm">
-                <span>🍽️</span>
+                <Utensils className="w-4 h-4 text-[#2A3F8F] dark:text-[#7F93E6]" />
                 <span>Meal: {Math.round(log.relatedMealLog.totalCarbsG)}g carbs</span>
                 <span className="text-muted-foreground">
                   {new Date(log.relatedMealLog.mealTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

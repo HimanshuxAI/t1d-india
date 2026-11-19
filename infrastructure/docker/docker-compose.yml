@@ -93,17 +93,10 @@ services:
       - ../../apps/ml-service:/app:ro
     networks:
       - t1d-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
-  # MinIO (S3-compatible storage)
+  # MinIO (S3-compatible storage) - using quay.io which doesn't have rate limits
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: t1d-minio
     command: server /data --console-address ":9001"
     environment:
@@ -124,7 +117,7 @@ services:
 
   # Create MinIO buckets
   minio-setup:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: t1d-minio-setup
     depends_on:
       - minio
@@ -141,7 +134,7 @@ services:
 
   # Prometheus
   prometheus:
-    image: prom/prometheus:latest
+    image: quay.io/prometheus/prometheus:latest
     container_name: t1d-prometheus
     ports:
       - "9090:9090"
@@ -156,7 +149,7 @@ services:
 
   # Grafana
   grafana:
-    image: grafana/grafana:latest
+    image: quay.io/grafana/grafana:latest
     container_name: t1d-grafana
     ports:
       - "3001:3000"

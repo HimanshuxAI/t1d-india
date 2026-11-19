@@ -2,6 +2,7 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   CreateInsulinLogSchema,
   BolusCalculationRequestSchema,
@@ -16,12 +17,65 @@ import {
   calculateIOB,
 } from '@t1d-india/shared';
 
+const BolusCalculationRequestJsonSchema = zodToJsonSchema(BolusCalculationRequestSchema, {
+  target: 'jsonSchema7',
+  name: 'BolusCalculationRequest',
+});
+const BolusCalculationResponseJsonSchema = zodToJsonSchema(BolusCalculationResponseSchema, {
+  target: 'jsonSchema7',
+  name: 'BolusCalculationResponse',
+});
+const CreateInsulinLogJsonSchema = zodToJsonSchema(CreateInsulinLogSchema, {
+  target: 'jsonSchema7',
+  name: 'CreateInsulinLog',
+});
+const InsulinLogResponseJsonSchema = zodToJsonSchema(
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string(),
+    loggedAt: z.string().datetime(),
+    administeredAt: z.string().datetime(),
+    insulinType: z.nativeEnum(InsulinType),
+    doseU: z.number(),
+    injectionSite: z.nativeEnum(InjectionSite),
+    relatedMealLogId: z.string().nullable(),
+    glucoseAtInjection: z.number().nullable(),
+    carbEstimateG: z.number().nullable(),
+    calculatorRecommendedU: z.number().nullable(),
+    overrideReason: z.string().nullable(),
+    deliveryMethod: z.nativeEnum(DeliveryMethod),
+    deviceId: z.string().nullable(),
+    syncedAt: z.string().datetime().nullable(),
+    clientId: z.string().nullable(),
+    createdAt: z.string().datetime(),
+  }),
+  { target: 'jsonSchema7', name: 'InsulinLogResponse' }
+);
+const PaginationParamsJsonSchema = zodToJsonSchema(PaginationParamsSchema, {
+  target: 'jsonSchema7',
+  name: 'PaginationParams',
+});
+const InsulinListQueryJsonSchema = zodToJsonSchema(
+  PaginationParamsSchema.extend({
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+    insulinType: z.nativeEnum(InsulinType).optional(),
+  }),
+  { target: 'jsonSchema7', name: 'InsulinListQuery' }
+);
+const InsulinDailySummaryQueryJsonSchema = zodToJsonSchema(
+  z.object({
+    date: z.string().date().optional(),
+  }),
+  { target: 'jsonSchema7', name: 'InsulinDailySummaryQuery' }
+);
+
 export const insulinRoutes: FastifyPluginAsync = async (app) => {
   // Calculate bolus recommendation
   app.post('/calculate-bolus', {
     schema: {
-      body: BolusCalculationRequestSchema,
-      response: { 200: BolusCalculationResponseSchema },
+      body: BolusCalculationRequestJsonSchema,
+      response: { 200: BolusCalculationResponseJsonSchema },
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request) => {
@@ -112,7 +166,7 @@ export const insulinRoutes: FastifyPluginAsync = async (app) => {
   // Create insulin log
   app.post('/', {
     schema: {
-      body: CreateInsulinLogSchema,
+      body: CreateInsulinLogJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request, reply) => {
@@ -163,11 +217,7 @@ export const insulinRoutes: FastifyPluginAsync = async (app) => {
   // Get insulin logs
   app.get('/', {
     schema: {
-      querystring: PaginationParamsSchema.extend({
-        startDate: z.string().datetime().optional(),
-        endDate: z.string().datetime().optional(),
-        insulinType: z.nativeEnum(InsulinType).optional(),
-      }),
+      querystring: InsulinListQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
@@ -286,9 +336,7 @@ export const insulinRoutes: FastifyPluginAsync = async (app) => {
   // Get daily insulin summary
   app.get('/summary/daily', {
     schema: {
-      querystring: z.object({
-        date: z.string().date().optional(),
-      }),
+      querystring: InsulinDailySummaryQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {

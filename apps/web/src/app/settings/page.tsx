@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { DashboardLayout } from '@/components/layout';
 import { cn } from '@/lib/utils';
 import {
   Bell, Shield, Globe, Palette, Moon, Sun, Monitor,
-  Download, Upload, Trash2, Key, Smartphone, Desktop,
+  Download, Upload, Trash2, Key, Smartphone, Syringe,
   Save, Loader2, CheckCircle, AlertCircle, Eye, EyeOff,
-  Wifi, WifiOff, Battery, BatteryLow, Volume2, VolumeX
+  Wifi, WifiOff, Battery, BatteryLow, Volume2, VolumeX,
+  Mail, MessageSquare, BookOpen, Lock, FileText, Building2, Bug, Lightbulb
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { BrandLogo } from '@/components/brand/logo';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -126,59 +128,72 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-8 max-w-6xl mx-auto pb-16">
+        {/* Editorial Header */}
+        <div className="relative pt-2 pb-6 border-b border-[#231F2B]/10 dark:border-white/10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-            <p className="text-muted-foreground">Customize your T1D India experience</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF4E8] dark:bg-[#1E1926] border border-[#231F2B]/10 text-xs font-bold text-[#2A3F8F] dark:text-[#7F93E6] uppercase tracking-wider mb-2">
+              <span className="w-2 h-2 rounded-full bg-[#2A3F8F]" />
+              सेटिंग्स · System & Protocol Preferences
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl font-black text-[#231F2B] dark:text-[#F3EEE4] tracking-tight">
+              Settings & Telemetry
+            </h1>
+            <p className="text-sm text-[#5C5665] dark:text-[#8C8496] max-w-2xl mt-1 leading-relaxed">
+              Configure device pairing, localized notification channels, DPDP Act compliance, and offline sync parameters.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={handleExport} className="btn-outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button onClick={handleExport} className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#1E1926] border border-[#231F2B]/15 text-xs font-bold text-[#231F2B] dark:text-[#F3EEE4] inline-flex items-center gap-1.5 hover:bg-[#FAF4E8] transition-colors shadow-xs">
+              <Download className="w-3.5 h-3.5 text-[#2A3F8F]" />
+              Export Config
             </button>
-            <label className="btn-outline cursor-pointer">
-              <Upload className="w-4 h-4 mr-2" />
+            <label className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#1E1926] border border-[#231F2B]/15 text-xs font-bold text-[#231F2B] dark:text-[#F3EEE4] inline-flex items-center gap-1.5 hover:bg-[#FAF4E8] cursor-pointer transition-colors shadow-xs">
+              <Upload className="w-3.5 h-3.5 text-[#2A3F8F]" />
               Import
               <input type="file" accept=".json" onChange={handleImport} className="hidden" />
             </label>
-            <button onClick={handleReset} className="btn-outline text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-              <Trash2 className="w-4 h-4 mr-2" />
+            <button onClick={handleReset} className="px-3.5 py-2 rounded-xl border border-[#D64045]/20 text-[#D64045] text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#D64045]/05 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
               Reset
             </button>
-            <button onClick={handleSave} disabled={isSaving} className="btn-primary">
-              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              {isSaving ? 'Saving...' : 'Save Changes'}
+            <button onClick={handleSave} disabled={isSaving} className="px-5 py-2 rounded-xl bg-[#2A3F8F] hover:bg-[#213272] text-[#FAF4E8] text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-all">
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {isSaving ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
         </div>
 
         {/* Tab navigation */}
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 overflow-x-auto">
+        <div className="flex p-1.5 rounded-2xl bg-white dark:bg-[#1E1926] border border-[#231F2B]/10 dark:border-white/10 overflow-x-auto shadow-xs">
           {[
-            { id: 'general', label: 'General', icon: Globe },
-            { id: 'notifications', label: 'Notifications', icon: Bell },
-            { id: 'appearance', label: 'Appearance', icon: Palette },
-            { id: 'data', label: 'Data & Sync', icon: Wifi },
-            { id: 'security', label: 'Security', icon: Shield },
-            { id: 'about', label: 'About', icon: Smartphone },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
-                activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              )}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
+            { id: 'general', label: 'General', hindi: 'सामान्य', icon: Globe },
+            { id: 'notifications', label: 'Notifications', hindi: 'सूचनाएं', icon: Bell },
+            { id: 'appearance', label: 'Appearance', hindi: 'थीम', icon: Palette },
+            { id: 'data', label: 'Offline Sync', hindi: 'सिंक', icon: Wifi },
+            { id: 'security', label: 'Security', hindi: 'सुरक्षा', icon: Shield },
+            { id: 'about', label: 'Clinical Study', hindi: 'अध्ययन', icon: Smartphone },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isCurrent = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap flex-1 justify-center',
+                  isCurrent
+                    ? 'bg-[#2A3F8F] text-[#FAF4E8] shadow-sm'
+                    : 'text-[#5C5665] dark:text-[#8C8496] hover:text-[#231F2B] dark:hover:text-[#F3EEE4] hover:bg-[#FAF4E8] dark:hover:bg-[#2A2435]'
+                )}
+              >
+                <Icon className={cn('w-4 h-4', isCurrent ? 'text-[#FAF4E8]' : 'text-[#2A3F8F] dark:text-[#7F93E6]')} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab content */}
@@ -377,21 +392,21 @@ function NotificationSettings({ settings, setSettings }: { settings: any; setSet
             description="Instant alerts on device"
             checked={settings.pushEnabled}
             onChange={v => handleChange('pushEnabled', v)}
-            icon="📱"
+            icon={<Smartphone className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />}
           />
           <DeliveryMethodSetting
             label="Email Notifications"
             description="Weekly reports and important alerts"
             checked={settings.emailEnabled}
             onChange={v => handleChange('emailEnabled', v)}
-            icon="📧"
+            icon={<Mail className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />}
           />
           <DeliveryMethodSetting
             label="SMS (Emergency Only)"
             description="Critical alerts via SMS to emergency contacts"
             checked={false}
             onChange={() => {}}
-            icon="📱"
+            icon={<MessageSquare className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />}
           />
         </div>
       </div>
@@ -667,29 +682,27 @@ function AboutSettings() {
     <div className="space-y-6">
       <div className="card">
         <div className="card-content text-center py-8">
-          <div className="w-20 h-20 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
-            <Syringe className="w-10 h-10 text-primary-600" />
+          <div className="flex justify-center mb-4">
+            <BrandLogo size="lg" />
           </div>
-          <h2 className="text-2xl font-bold">T1D India</h2>
-          <p className="text-muted-foreground mt-2">Version 0.0.1 (Beta)</p>
+          <p className="text-muted-foreground mt-2">Version 1.0.0 · ABDM M1/M2/M3 Sandbox Ready</p>
           <p className="text-sm text-muted-foreground mt-4 max-w-md mx-auto">
-            AI-powered hypoglycemia prediction and carb-counting for Indian Type 1 Diabetes diets.
-            Built for the T1D community in India.
+            Evidence-based clinical hypoglycemia risk forecasting and Indian diet carb counting for Type 1 Diabetes. Built for the T1D community in India.
           </p>
         </div>
       </div>
 
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title">Links</h3>
+          <h3 className="card-title">Links & Resources</h3>
         </div>
         <div className="card-content space-y-3">
-          <LinkItem label="Documentation" href="#" icon="📚" />
-          <LinkItem label="Privacy Policy" href="#" icon="🔒" />
-          <LinkItem label="Terms of Service" href="#" icon="📄" />
-          <LinkItem label="Clinical Study Info" href="#" icon="🏥" />
-          <LinkItem label="Report a Bug" href="#" icon="🐛" />
-          <LinkItem label="Feature Request" href="#" icon="💡" />
+          <LinkItem label="Clinical Documentation" href="#" icon={<BookOpen className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />} />
+          <LinkItem label="Privacy Policy (DPDP Act 2023)" href="#" icon={<Lock className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />} />
+          <LinkItem label="Terms of Service" href="#" icon={<FileText className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />} />
+          <LinkItem label="Clinical Study & ICMR Data" href="#" icon={<Building2 className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />} />
+          <LinkItem label="Report an Issue" href="#" icon={<Bug className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />} />
+          <LinkItem label="Suggest Enhancement" href="#" icon={<Lightbulb className="w-5 h-5 text-[#2A3F8F] dark:text-[#7F93E6]" />} />
         </div>
       </div>
 
@@ -778,20 +791,22 @@ function DeliveryMethodSetting({ label, description, checked, onChange, icon }: 
   description: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
-  icon: string;
+  icon: React.ReactNode;
 }) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-      <span className="text-2xl">{icon}</span>
+    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-[#231F2B]/10 dark:border-white/10 hover:bg-[#FAF4E8]/50 dark:hover:bg-[#1E1926]/50">
+      <div className="w-10 h-10 rounded-lg bg-[#FAF4E8] dark:bg-[#1E1926] border border-[#231F2B]/10 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
       <div className="flex-1">
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="font-semibold text-sm text-[#231F2B] dark:text-[#F3EEE4]">{label}</p>
+        <p className="text-xs text-[#5C5665] dark:text-[#8C8496]">{description}</p>
       </div>
       <input
         type="checkbox"
         checked={checked}
         onChange={e => onChange(e.target.checked)}
-        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
       />
     </label>
   );
@@ -829,11 +844,13 @@ function StorageBar({ label, used, total, unit, color }: {
   );
 }
 
-function LinkItem({ label, href, icon }: { label: string; href: string; icon: string }) {
+function LinkItem({ label, href, icon }: { label: string; href: string; icon: React.ReactNode }) {
   return (
-    <a href={href} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-      <span className="text-xl">{icon}</span>
-      <span className="font-medium">{label}</span>
+    <a href={href} className="flex items-center gap-3 p-3 rounded-xl border border-[#231F2B]/10 dark:border-white/10 hover:bg-[#FAF4E8]/50 dark:hover:bg-[#1E1926]/50 transition-colors">
+      <div className="w-9 h-9 rounded-lg bg-[#FAF4E8] dark:bg-[#1E1926] border border-[#231F2B]/10 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <span className="font-semibold text-sm text-[#231F2B] dark:text-[#F3EEE4]">{label}</span>
     </a>
   );
 }

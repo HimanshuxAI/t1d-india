@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { MealLoggingForm } from '@/components/meal/meal-logging-form';
 import { MealHistory } from '@/components/meal/meal-history';
 import { QuickActions } from '@/components/meal/quick-actions';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { DashboardLayout } from '@/components/layout';
 import { Utensils, Search, Camera, Mic2, Calendar, Clock, Filter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,23 +25,27 @@ export default function MealsPage() {
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meals</h1>
-            <p className="text-muted-foreground">Log and track your meals with carb counting</p>
+            <h1 className="font-serif text-3xl font-black text-[#231F2B] dark:text-[#F3EEE4]">
+              Desi Meals & Carb Tracker
+            </h1>
+            <p className="text-sm text-[#5C5665] dark:text-[#8C8496]">
+              Indian food composition & composite meal carbohydrate estimation
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
-                'btn-outline',
-                showFilters && 'bg-primary-50 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700'
+                'btn-outline text-xs',
+                showFilters && 'bg-[#FAF4E8] dark:bg-[#1A1622] border-[#2A3F8F] text-[#2A3F8F]'
               )}
             >
-              <Filter className="w-4 h-4 mr-2" />
+              <Filter className="w-3.5 h-3.5 mr-1.5" />
               Filters
             </button>
-            <Link href="/meals/new" className="btn-primary">
-              <Utensils className="w-4 h-4 mr-2" />
-              Log Meal
+            <Link href="/meals/new" className="btn-primary text-xs">
+              <Utensils className="w-3.5 h-3.5 mr-1.5" />
+              Log Indian Meal
             </Link>
           </div>
         </div>
@@ -94,23 +98,23 @@ export default function MealsPage() {
         )}
 
         {/* Tab navigation */}
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="flex gap-1.5 bg-[#FAF4E8] dark:bg-[#1A1622] rounded-2xl p-1.5 border border-[#231F2B]/10 dark:border-white/10 w-fit">
           {[
-            { id: 'log', label: 'Log Meal', icon: Utensils },
-            { id: 'history', label: 'History', icon: Clock },
-            { id: 'search', label: 'Food Search', icon: Search },
+            { id: 'log', label: 'Log Meal (थाली)', icon: Utensils },
+            { id: 'history', label: 'Past Meals', icon: Clock },
+            { id: 'search', label: 'Food Composition (500+)', icon: Search },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all',
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-[#2A3F8F] text-[#FAF4E8] shadow-xs'
+                  : 'text-[#5C5665] dark:text-[#8C8496] hover:text-[#231F2B] dark:hover:text-[#F3EEE4]'
               )}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
             </button>
           ))}

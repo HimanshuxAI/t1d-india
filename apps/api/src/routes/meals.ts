@@ -2,6 +2,7 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   CreateMealLogSchema,
   MealLogResponseSchema,
@@ -13,12 +14,40 @@ import {
   getAbsorptionProfile,
 } from '@t1d-india/shared';
 
+const CreateMealLogJsonSchema = zodToJsonSchema(CreateMealLogSchema, {
+  target: 'jsonSchema7',
+  name: 'CreateMealLog',
+});
+const UpdateMealLogJsonSchema = zodToJsonSchema(CreateMealLogSchema.partial(), {
+  target: 'jsonSchema7',
+  name: 'UpdateMealLog',
+});
+const MealLogResponseJsonSchema = zodToJsonSchema(MealLogResponseSchema, {
+  target: 'jsonSchema7',
+  name: 'MealLogResponse',
+});
+const PaginationParamsJsonSchema = zodToJsonSchema(PaginationParamsSchema, {
+  target: 'jsonSchema7',
+  name: 'PaginationParams',
+});
+const MealListQueryJsonSchema = zodToJsonSchema(
+  PaginationParamsSchema.extend({
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+    mealType: z.nativeEnum(MealType).optional(),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'MealListQuery',
+  },
+);
+
 export const mealRoutes: FastifyPluginAsync = async (app) => {
   // Create meal log
   app.post('/', {
     schema: {
-      body: CreateMealLogSchema,
-      response: { 201: MealLogResponseSchema },
+      body: CreateMealLogJsonSchema,
+      response: { 201: MealLogResponseJsonSchema },
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request, reply) => {
@@ -109,11 +138,7 @@ export const mealRoutes: FastifyPluginAsync = async (app) => {
   // Get meal logs with pagination
   app.get('/', {
     schema: {
-      querystring: PaginationParamsSchema.extend({
-        startDate: z.string().datetime().optional(),
-        endDate: z.string().datetime().optional(),
-        mealType: z.nativeEnum(MealType).optional(),
-      }),
+      querystring: MealListQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
@@ -211,7 +236,7 @@ export const mealRoutes: FastifyPluginAsync = async (app) => {
   // Update meal log
   app.patch('/:id', {
     schema: {
-      body: CreateMealLogSchema.partial(),
+      body: UpdateMealLogJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request, reply) => {

@@ -100,3 +100,6 @@ secrets/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+# demo runtime
+.demo-*.log
+apps/ml-service/.venv

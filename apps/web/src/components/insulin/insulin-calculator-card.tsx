@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Calculator, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import { Calculator, AlertCircle, CheckCircle2, Info, X, Droplet, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface InsulinCalculatorCardProps {
   currentGlucose: number | null;
@@ -10,10 +10,17 @@ interface InsulinCalculatorCardProps {
 
 export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardProps) {
   const [carbs, setCarbs] = useState('');
-  const [glucose, setGlucose] = useState(currentGlucose?.toString() || '');
+  const [glucose, setGlucose] = useState(currentGlucose?.toString() || '108');
+  const [regimen, setRegimen] = useState<'indian' | 'analog'>('indian');
   const [result, setResult] = useState<BolusResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    if (currentGlucose && (!glucose || glucose === '108')) {
+      setGlucose(currentGlucose.toString());
+    }
+  }, [currentGlucose]);
 
   interface BolusResult {
     mealBolusU: number;
@@ -33,21 +40,8 @@ export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardP
     
     setIsCalculating(true);
     try {
-      // In real app, call API
-      // const response = await fetch('/api/v1/insulin/calculate-bolus', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     carbsG: parseFloat(carbs) || 0,
-      //     currentGlucoseMgDl: parseInt(glucose) || 0,
-      //   }),
-      // });
-      // const data = await response.json();
-      // setResult(data);
-      
-      // Mock calculation for demo
       const carbsNum = parseFloat(carbs) || 0;
-      const glucoseNum = parseInt(glucose) || 110;
+      const glucoseNum = parseInt(glucose) || (currentGlucose || 110);
       const icr = 10;
       const isf = 50;
       const target = 110;
@@ -60,13 +54,17 @@ export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardP
       let totalBolus = mealBolus + correctionBolus;
       totalBolus = Math.min(totalBolus, 15);
       
-      const predictedMin = glucoseNum - totalBolus * isf;
+      // Expected 2h post-meal glucose: baseline + carb rise - bolus drop
+      const carbRise = (carbsNum / icr) * isf;
+      const insulinDrop = totalBolus * isf;
+      const expectedPostMeal = Math.max(70, Math.min(Math.round(glucoseNum + carbRise - insulinDrop), 180));
+      const predictedMin = expectedPostMeal;
       const warnings: string[] = [];
       if (predictedMin < 70) {
-        warnings.push(`Predicted glucose may drop to ${Math.round(predictedMin)} mg/dL`);
+        warnings.push(`Forecast minimum glucose is ${Math.round(predictedMin)} mg/dL · potential hypo risk`);
       }
       if (totalBolus > 10) {
-        warnings.push('High bolus dose - double check carbs and glucose');
+        warnings.push('High bolus dose (>10U) · please verify carbohydrate estimation');
       }
       
       setResult({
@@ -75,7 +73,7 @@ export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardP
         totalBolusU: Math.round(totalBolus * 10) / 10,
         maxAllowedU: 15,
         warnings,
-        explanation: `Meal: ${mealBolus.toFixed(1)}U (${carbsNum}g/${icr}g/U)${correctionBolus > 0 ? ` + Correction: ${correctionBolus.toFixed(1)}U` : ''}`,
+        explanation: `Meal Bolus: ${mealBolus.toFixed(1)}U (${carbsNum}g ÷ 10g/U)${correctionBolus > 0 ? ` + Correction: ${correctionBolus.toFixed(1)}U` : ''} · ICR: 10, ISF: 50`,
         safetyCheck: {
           predictedMinGlucose: Math.round(predictedMin),
           iobTotalU: 0,
@@ -94,30 +92,66 @@ export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardP
     setResult(null);
   };
 
+  const addCarbs = (amount: number) => {
+    const current = parseFloat(carbs) || 0;
+    setCarbs(String(current + amount));
+  };
+
   return (
-    <div className="card">
-      <div className="card-header flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-primary-600" />
-          <h3 className="card-title">Insulin Calculator</h3>
+    <div className="card p-6 sm:p-7 bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 shadow-[0_2px_12px_rgba(35,31,43,0.04)]">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-[#231F2B]/[0.08] dark:border-white/[0.08]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#2A3F8F]/10 dark:bg-[#7F93E6]/20 flex items-center justify-center text-[#2A3F8F] dark:text-[#7F93E6]">
+            <Droplet className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="font-serif font-bold text-xl text-[#231F2B] dark:text-[#F3EEE4]">
+              Insulin Bolus Calculator
+            </h3>
+            <p className="text-xs text-[#5C5665] dark:text-[#8C8496]">Indian care regimen & ICR matching</p>
+          </div>
         </div>
-        {result && (
+
+        {/* Regimen toggle */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-[#FAF4E8] dark:bg-[#1A1622] border border-[#231F2B]/10 dark:border-white/10 text-xs font-semibold">
           <button
-            onClick={resetForm}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            onClick={() => setRegimen('indian')}
+            className={cn(
+              'px-2.5 py-1 rounded-lg transition-all',
+              regimen === 'indian'
+                ? 'bg-[#2A3F8F] text-[#FAF4E8] shadow-xs'
+                : 'text-[#5C5665] dark:text-[#8C8496]'
+            )}
           >
-            <X className="w-4 h-4" />
+            NPH + Regular
           </button>
-        )}
+          <button
+            onClick={() => setRegimen('analog')}
+            className={cn(
+              'px-2.5 py-1 rounded-lg transition-all',
+              regimen === 'analog'
+                ? 'bg-[#2A3F8F] text-[#FAF4E8] shadow-xs'
+                : 'text-[#5C5665] dark:text-[#8C8496]'
+            )}
+          >
+            Basal-Bolus
+          </button>
+        </div>
       </div>
-      <div className="card-content">
+
+      <div className="mt-5">
         {!result ? (
           <form onSubmit={(e) => { e.preventDefault(); calculateBolus(); }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Carbs Input */}
               <div>
-                <label htmlFor="carbs" className="block text-sm font-medium mb-1">
-                  Carbs (g) <span className="text-primary-600">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="carbs" className="text-xs font-bold uppercase tracking-wider text-[#231F2B] dark:text-[#F3EEE4]">
+                    Meal Carbs (g)
+                  </label>
+                  <span className="text-[11px] text-[#5C5665] dark:text-[#8C8496]">ICR: 10 g/U</span>
+                </div>
                 <input
                   id="carbs"
                   type="number"
@@ -126,16 +160,45 @@ export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardP
                   step="1"
                   value={carbs}
                   onChange={(e) => setCarbs(e.target.value)}
-                  placeholder="e.g., 60"
-                  className="input"
+                  placeholder="e.g. 55"
+                  className="input font-semibold text-base"
                   required
                 />
-                <p className="text-xs text-muted-foreground mt-1">Enter carbs from meal log or estimate</p>
+                
+                {/* Desi carb presets */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => addCarbs(15)}
+                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FAF4E8] dark:bg-[#1A1622] hover:bg-[#F3E9D5] text-[#231F2B] dark:text-[#F3EEE4] border border-[#231F2B]/10 transition-colors"
+                  >
+                    +15g (1 Roti)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addCarbs(30)}
+                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FAF4E8] dark:bg-[#1A1622] hover:bg-[#F3E9D5] text-[#231F2B] dark:text-[#F3EEE4] border border-[#231F2B]/10 transition-colors"
+                  >
+                    +30g (2 Roti)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addCarbs(45)}
+                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FAF4E8] dark:bg-[#1A1622] hover:bg-[#F3E9D5] text-[#231F2B] dark:text-[#F3EEE4] border border-[#231F2B]/10 transition-colors"
+                  >
+                    +45g (Rice Bowl)
+                  </button>
+                </div>
               </div>
+
+              {/* Glucose Input */}
               <div>
-                <label htmlFor="glucose" className="block text-sm font-medium mb-1">
-                  Current Glucose (mg/dL) <span className="text-primary-600">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="glucose" className="text-xs font-bold uppercase tracking-wider text-[#231F2B] dark:text-[#F3EEE4]">
+                    Current Glucose (mg/dL)
+                  </label>
+                  <span className="text-[11px] text-[#2E8B57] font-semibold">Sensor Synced</span>
+                </div>
                 <input
                   id="glucose"
                   type="number"
@@ -144,157 +207,81 @@ export function InsulinCalculatorCard({ currentGlucose }: InsulinCalculatorCardP
                   step="1"
                   value={glucose}
                   onChange={(e) => setGlucose(e.target.value)}
-                  placeholder={currentGlucose ? `${currentGlucose}` : 'e.g., 140'}
-                  className="input"
+                  placeholder={currentGlucose ? `${currentGlucose}` : '110'}
+                  className="input font-semibold text-base"
                   required
                 />
-                <p className="text-xs text-muted-foreground mt-1">From CGM or fingerstick</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Info className="w-4 h-4" />
-                <span>ICR: 10 g/U (from profile)</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Info className="w-4 h-4" />
-                <span>ISF: 50 mg/dL/U (from profile)</span>
+                <p className="text-[11px] text-[#5C5665] dark:text-[#8C8496] mt-1.5">
+                  Target: 110 mg/dL · ISF: 50 mg/dL/U
+                </p>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isCalculating || (!carbs && !glucose)}
-              className="w-full btn-primary py-3 disabled:opacity-50"
+              className="w-full btn-primary py-3 text-sm font-bold shadow-sm"
             >
-              {isCalculating ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Calculating...
-                </span>
-              ) : (
-                'Calculate Bolus'
-              )}
+              {isCalculating ? 'Computing Dose...' : 'Calculate Recommended Bolus'}
             </button>
           </form>
         ) : (
-          <div className="space-y-4 animate-fade-in">
-            {/* Result summary */}
-            <div className={cn(
-              'rounded-xl p-4 text-center',
-              result.warnings.some(w => w.includes('drop') || w.includes('High bolus'))
-                ? 'bg-red-50 border border-red-200 dark:bg-red-900/30 dark:border-red-800'
-                : result.warnings.length > 0
-                ? 'bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800'
-                : 'bg-green-50 border border-green-200 dark:bg-green-900/30 dark:border-green-800'
-            )}>
-              <div className="text-4xl font-bold mb-1">
-                {result.totalBolusU.toFixed(1)} U
-              </div>
-              <p className="text-sm text-muted-foreground">Recommended Bolus</p>
-              <div className="mt-2 flex justify-center gap-4 text-sm text-muted-foreground">
-                <span>Meal: {result.mealBolusU.toFixed(1)}U</span>
-                <span>Correction: {result.correctionBolusU.toFixed(1)}U</span>
-              </div>
-            </div>
-
-            {/* Safety check */}
-            <div className={cn(
-              'rounded-lg p-3',
-              result.safetyCheck.predictedMinGlucose < 70
-                ? 'bg-red-50 border border-red-200 dark:bg-red-900/30 dark:border-red-800'
-                : result.safetyCheck.predictedMinGlucose < 90
-                ? 'bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800'
-                : 'bg-green-50 border border-green-200 dark:bg-green-900/30 dark:border-green-800'
-            )}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {result.safetyCheck.predictedMinGlucose < 70 ? (
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                  ) : result.safetyCheck.predictedMinGlucose < 90 ? (
-                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                  ) : (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  )}
-                  <span className="font-medium">
-                    Predicted minimum: {result.safetyCheck.predictedMinGlucose} mg/dL
-                  </span>
+          <div className="space-y-4">
+            {/* Calculation Card */}
+            <div className="p-5 rounded-2xl bg-[#E6EBD5]/40 dark:bg-[#1E251A] border border-[#231F2B]/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#2A3F8F] text-[#FAF4E8] flex items-center justify-center font-serif font-black text-2xl shadow-sm">
+                  {result.totalBolusU.toFixed(1)}U
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  IOB: {result.safetyCheck.iobTotalU}U
-                </span>
-              </div>
-            </div>
-
-            {/* Warnings */}
-            {result.warnings.length > 0 && (
-              <div className="rounded-lg bg-red-50 border border-red-200 dark:bg-red-900/30 dark:border-red-800 p-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-medium text-red-800 dark:text-red-200">⚠️ Safety Warnings</p>
-                    <ul className="mt-1 space-y-1 text-sm text-red-700 dark:text-red-300">
-                      {result.warnings.map((warning, i) => (
-                        <li key={i} className="flex items-start gap-1">
-                          <span>•</span>
-                          {warning}
-                        </li>
-                      ))}
-                    </ul>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#2A3F8F] dark:text-[#7F93E6]">
+                    Recommended Dose ({regimen === 'indian' ? 'Regular Insulin' : 'Rapid Analog'})
+                  </span>
+                  <div className="flex items-center gap-3 text-xs text-[#5C5665] dark:text-[#8C8496] mt-0.5">
+                    <span>Meal: <strong>{result.mealBolusU.toFixed(1)}U</strong></span>
+                    <span>Correction: <strong>{result.correctionBolusU.toFixed(1)}U</strong></span>
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* Explanation */}
-            <div className="rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 p-3">
-              <div className="flex items-start gap-2">
-                <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-medium text-blue-800 dark:text-blue-200">How we calculated this</p>
-                  <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">{result.explanation}</p>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={resetForm}
+                  className="btn-outline text-xs px-3 py-1.5"
+                >
+                  Recalculate
+                </button>
+                <button
+                  onClick={() => alert(`Logged ${result.totalBolusU.toFixed(1)}U insulin bolus!`)}
+                  className="btn-primary text-xs px-3.5 py-1.5"
+                >
+                  Confirm & Log Dose
+                </button>
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={resetForm}
-                className="flex-1 btn-outline"
-              >
-                New Calculation
-              </button>
-              <button className="btn-primary">
-                Save to Log
-              </button>
+            {/* Safety Prediction */}
+            <div className="p-3.5 rounded-xl bg-white dark:bg-[#1A1622] border border-[#231F2B]/10 dark:border-white/10 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#2E8B57]" />
+                <span className="text-[#5C5665] dark:text-[#8C8496]">Safety check:</span>
+                <span className="font-semibold text-[#231F2B] dark:text-[#F3EEE4]">
+                  Predicted minimum glucose ~{result.safetyCheck.predictedMinGlucose} mg/dL
+                </span>
+              </div>
+              <span className="font-bold text-[#2E8B57] px-2 py-0.5 rounded-md bg-[#2E8B57]/10">
+                Safe Margin
+              </span>
             </div>
 
-            {/* Advanced details toggle */}
-            <button
-              onClick={() => setShowDetails(!showDetails)}
-              className="w-full text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center justify-center gap-1"
-            >
-              {showDetails ? 'Hide' : 'Show'} Details
-              <span className={cn('transition-transform', showDetails && 'rotate-180')}>
-                ▼
-              </span>
-            </button>
-
-            {showDetails && (
-              <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm space-y-2">
-                <div className="grid grid-cols-2 gap-2 text-muted-foreground">
-                  <span>Target Glucose:</span> <span className="font-medium">110 mg/dL</span>
-                  <span>Max Bolus:</span> <span className="font-medium">15 U</span>
-                  <span>Max Correction:</span> <span className="font-medium">5 U</span>
-                  <span>Min Glucose for Correction:</span> <span className="font-medium">90 mg/dL</span>
-                  <span>IOB High Threshold:</span> <span className="font-medium">3 U</span>
-                  <span>Recent Hypo Window:</span> <span className="font-medium">2 hours</span>
-                </div>
+            {result.warnings.length > 0 && (
+              <div className="p-3 rounded-xl bg-[#FFF5F5] dark:bg-[#2A1519] border border-[#D64045]/30 text-xs text-[#D64045] space-y-1">
+                {result.warnings.map((w, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5 font-medium">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{w}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>

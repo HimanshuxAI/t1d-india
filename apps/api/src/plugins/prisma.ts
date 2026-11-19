@@ -2,6 +2,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { FastifyPluginAsync } from 'fastify';
+import fp from 'fastify-plugin';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -29,4 +30,4 @@ const prismaPlugin: FastifyPluginAsync = async (app) => {
   });
 };
 
-export default prismaPlugin;
+export default fp(prismaPlugin);

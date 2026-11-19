@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { DashboardLayout } from '@/components/layout';
 import { cn } from '@/lib/utils';
 import {
   Search, Filter, ChevronDown, Utensils, Download,
@@ -83,13 +83,17 @@ export default function FoodsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Food Database</h1>
-            <p className="text-muted-foreground">500+ Indian foods with carb counts and GI values</p>
+            <h1 className="font-serif text-3xl font-black text-[#231F2B] dark:text-[#F3EEE4]">
+              Indian Food Composition Database
+            </h1>
+            <p className="text-sm text-[#5C5665] dark:text-[#8C8496]">
+              500+ Indian items with ICMR nutritional values, glycemic index & portion sizes
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="btn-outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export CSV
+            <button className="btn-outline text-xs">
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Export ICMR Data
             </button>
           </div>
         </div>
@@ -159,32 +163,38 @@ export default function FoodsPage() {
         )}
 
         {/* Tab navigation */}
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 overflow-x-auto">
+        <div className="flex p-1.5 rounded-2xl bg-white dark:bg-[#1E1926] border border-[#231F2B]/10 dark:border-white/10 overflow-x-auto shadow-xs">
           {[
             { id: 'search', label: 'Search Results', icon: Search, count: searchResults?.length },
             { id: 'browse', label: 'Browse All', icon: Grid, count: foods.length },
             { id: 'favorites', label: 'Favorites', icon: Heart, count: 0 },
             { id: 'composite', label: 'Composite Meals', icon: Utensils, count: compositeMeals?.length },
             { id: 'categories', label: 'Categories', icon: Tag, count: FOOD_CATEGORIES.length - 1 },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as any)}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
-                activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              )}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className="badge badge-outline ml-1">{tab.count}</span>
-              )}
-            </button>
-          ))}
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isCurrent = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap flex-1 justify-center',
+                  isCurrent
+                    ? 'bg-[#2A3F8F] text-[#FAF4E8] shadow-sm'
+                    : 'text-[#5C5665] dark:text-[#8C8496] hover:text-[#231F2B] dark:hover:text-[#F3EEE4] hover:bg-[#FAF4E8] dark:hover:bg-[#2A2435]'
+                )}
+              >
+                <Icon className={cn('w-4 h-4', isCurrent ? 'text-[#FAF4E8]' : 'text-[#2A3F8F] dark:text-[#7F93E6]')} />
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', isCurrent ? 'bg-white/20 text-white' : 'bg-[#FAF4E8] dark:bg-[#16131C] text-[#5C5665]')}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* View mode toggle */}
@@ -539,34 +549,47 @@ function CompositeMealCard({ meal }: { meal: any }) {
 }
 
 function CategoriesList() {
-  const categoryIcons: Record<string, string> = {
-    cereal: '🌾',
-    pulse: '🫘',
-    vegetable: '🥦',
-    fruit: '🍎',
-    dairy: '🥛',
-    meat: '🥩',
-    fish: '🐟',
-    fat: '🧈',
-    sweet: '🍬',
-    beverage: '🥤',
-    condiment: '🧂',
-    composite: '🍽️',
+  const categoryLabels: Record<string, { label: string; desc: string; hindi: string }> = {
+    cereal: { label: 'Cereals & Millets', desc: 'Roti, Ragi, Bajra, Rice, Poha', hindi: 'अनाज' },
+    pulse: { label: 'Pulses & Legumes', desc: 'Dal, Chana, Rajma, Moong', hindi: 'दालें' },
+    vegetable: { label: 'Vegetables & Sabzi', desc: 'Bhindi, Palak, Gobi, Paneer Sabzi', hindi: 'सब्जियां' },
+    fruit: { label: 'Fresh Fruits', desc: 'Apple, Papaya, Guava, Jamun', hindi: 'फल' },
+    dairy: { label: 'Dairy & Milk Products', desc: 'Curd, Paneer, Chaas, Doodh', hindi: 'डेयरी' },
+    meat: { label: 'Poultry & Meats', desc: 'Chicken, Mutton, Eggs', hindi: 'मांस' },
+    fish: { label: 'Fish & Seafood', desc: 'Rohu, Hilsa, Pomfret, Prawns', hindi: 'मछली' },
+    fat: { label: 'Oils & Ghee', desc: 'Desi Ghee, Mustard, Coconut Oil', hindi: 'घी व तेल' },
+    sweet: { label: 'Sweets & Desserts', desc: 'Laddoo, Halwa, Kheer, Jalebi', hindi: 'मिठाई' },
+    beverage: { label: 'Beverages & Chai', desc: 'Masala Chai, Filter Coffee, Lassi', hindi: 'पेय' },
+    condiment: { label: 'Chutneys & Pickles', desc: 'Mint chutney, Achar, Podi', hindi: 'चटनी व अचार' },
+    composite: { label: 'Complete Thalis', desc: 'North & South Indian Thalis', hindi: 'थाली' },
   };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {FOOD_CATEGORIES.filter(c => c !== 'all').map((cat) => (
-        <div key={cat} className="card p-6 hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center gap-4">
-            <span className="text-4xl">{categoryIcons[cat] || '🍽️'}</span>
-            <div>
-              <h3 className="font-semibold text-lg">{cat.charAt(0).toUpperCase() + cat.slice(1)}</h3>
-              <p className="text-sm text-muted-foreground">Browse {cat} foods</p>
+      {FOOD_CATEGORIES.filter(c => c !== 'all').map((cat) => {
+        const info = categoryLabels[cat] || { label: cat, desc: `Browse ${cat} items`, hindi: '' };
+        return (
+          <div
+            key={cat}
+            className="p-5 rounded-2xl bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 dark:border-white/10 hover:border-[#2A3F8F]/40 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#FAF4E8] dark:bg-[#1E1926] text-[#2A3F8F] dark:text-[#7F93E6] border border-[#231F2B]/10">
+                {info.hindi || cat}
+              </span>
+              <span className="w-8 h-8 rounded-lg bg-[#FAF4E8] dark:bg-[#1E1926] border border-[#231F2B]/10 flex items-center justify-center text-[#2A3F8F] dark:text-[#7F93E6] group-hover:scale-110 transition-transform">
+                <Utensils className="w-4 h-4" />
+              </span>
             </div>
+            <h3 className="font-serif font-bold text-lg text-[#231F2B] dark:text-[#F3EEE4] group-hover:text-[#2A3F8F] transition-colors">
+              {info.label}
+            </h3>
+            <p className="text-xs text-[#5C5665] dark:text-[#8C8496] mt-1 leading-relaxed">
+              {info.desc}
+            </p>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

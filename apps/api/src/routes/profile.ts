@@ -2,8 +2,32 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { PatientProfileSchema, AppError, ERROR_CODES, UserRole } from '@t1d-india/shared';
 import argon2 from 'argon2';
+
+const PatientProfileJsonSchema = zodToJsonSchema(PatientProfileSchema, {
+  target: 'jsonSchema7',
+  name: 'PatientProfile',
+});
+const PatientProfileUpdateJsonSchema = zodToJsonSchema(PatientProfileSchema.partial(), {
+  target: 'jsonSchema7',
+  name: 'PatientProfileUpdate',
+});
+const PreferencesUpdateJsonSchema = zodToJsonSchema(
+  z.object({
+    hypoThresholdMgDl: z.number().int().min(50).max(100).optional(),
+    severeHypoThresholdMgDl: z.number().int().min(40).max(80).optional(),
+    alertSoundEnabled: z.boolean().optional(),
+    caregiverShareEnabled: z.boolean().optional(),
+    dataSharingConsent: z.boolean().optional(),
+    researchConsent: z.boolean().optional(),
+    marketingConsent: z.boolean().optional(),
+    locale: z.string().optional(),
+    timezone: z.string().optional(),
+  }),
+  { target: 'jsonSchema7', name: 'PreferencesUpdate' }
+);
 
 export const profileRoutes: FastifyPluginAsync = async (app) => {
   // Get current user's profile
@@ -56,7 +80,7 @@ export const profileRoutes: FastifyPluginAsync = async (app) => {
   // Create or update profile
   app.put('/', {
     schema: {
-      body: PatientProfileSchema,
+      body: PatientProfileJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request, reply) => {
@@ -167,17 +191,7 @@ export const profileRoutes: FastifyPluginAsync = async (app) => {
   // Update preferences only
   app.patch('/preferences', {
     schema: {
-      body: z.object({
-        hypoThresholdMgDl: z.number().int().min(50).max(100).optional(),
-        severeHypoThresholdMgDl: z.number().int().min(40).max(70).optional(),
-        alertSoundEnabled: z.boolean().optional(),
-        caregiverShareEnabled: z.boolean().optional(),
-        dataSharingConsent: z.boolean().optional(),
-        researchConsent: z.boolean().optional(),
-        marketingConsent: z.boolean().optional(),
-        locale: z.string().optional(),
-        timezone: z.string().optional(),
-      }),
+      body: PreferencesUpdateJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request) => {

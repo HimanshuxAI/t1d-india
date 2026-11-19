@@ -1,3 +1,4 @@
-export { MealLoggingForm } from './MealLoggingForm';
-export { MealHistory } from './MealHistory';
-export { QuickActions } from './QuickActions';
+export { MealLoggingForm } from './meal-logging-form';
+export { MealHistory } from './meal-history';
+export { QuickActions } from './quick-actions';
+export { RecentMeals } from './recent-meals';

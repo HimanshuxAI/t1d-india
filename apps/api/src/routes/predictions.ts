@@ -2,16 +2,58 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { AppError, ERROR_CODES, HYPO_PREDICTION } from '@t1d-india/shared';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { AppError, ERROR_CODES } from '@t1d-india/shared';
 import axios from 'axios';
+
+const HypoPredictionQueryJsonSchema = zodToJsonSchema(
+  z.object({
+    horizons: z.array(z.number().int()).default([30, 60]),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'HypoPredictionQuery',
+  }
+);
+
+const HypoPredictionResponseJsonSchema = zodToJsonSchema(
+  z.object({
+    predictions: z.array(
+      z.object({
+        horizonMin: z.number().int(),
+        glucoseP10: z.number().int(),
+        glucoseP50: z.number().int(),
+        glucoseP90: z.number().int(),
+        hypoProbability: z.number().min(0).max(1),
+        severeHypoProbability: z.number().min(0).max(1),
+        topFeatures: z.array(z.object({ feature: z.string(), contribution: z.number() })),
+        predictedAt: z.string().datetime(),
+        modelVersion: z.string(),
+      })
+    ),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'HypoPredictionResponse',
+  }
+);
+
+const HypoHistoryQueryJsonSchema = zodToJsonSchema(
+  z.object({
+    hours: z.coerce.number().int().min(1).max(168).default(24),
+    horizon: z.number().int().optional(),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'HypoHistoryQuery',
+  }
+);
 
 export const predictionRoutes: FastifyPluginAsync = async (app) => {
   // Get latest hypoglycemia prediction
   app.get('/hypo/latest', {
     schema: {
-      querystring: z.object({
-        horizons: z.array(z.number().int()).default([30, 60]),
-      }),
+      querystring: HypoPredictionQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
@@ -68,10 +110,7 @@ export const predictionRoutes: FastifyPluginAsync = async (app) => {
   // Get prediction history
   app.get('/hypo/history', {
     schema: {
-      querystring: z.object({
-        hours: z.coerce.number().int().min(1).max(168).default(24),
-        horizon: z.number().int().optional(),
-      }),
+      querystring: HypoHistoryQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
@@ -140,37 +179,49 @@ export const predictionRoutes: FastifyPluginAsync = async (app) => {
       })),
     };
   });
-};
+}
 
-// Trigger ML prediction via ML service
 async function triggerPrediction(app: any, userId: string) {
+  // Get latest CGM reading
+  const latestCGM = await app.prisma.cGMReading.findFirst({
+    where: { userId, isValid: true },
+    orderBy: { time: 'desc' },
+  });
+
+  if (!latestCGM) return;
+
+  // Get recent meals and insulin
+  const recentMeals = await app.prisma.mealLog.findMany({
+    where: { userId, mealTime: { gte: new Date(Date.now() - 4 * 60 * 60 * 1000) } },
+    orderBy: { mealTime: 'desc' },
+  });
+  
+  const recentInsulin = await app.prisma.insulinLog.findMany({
+    where: { userId, administeredAt: { gte: new Date(Date.now() - 8 * 60 * 60 * 1000) } },
+    orderBy: { administeredAt: 'desc' },
+  });
+
+  // Prepare input for ML service
+  const input = {
+    glucose: [latestCGM.glucoseMgDl],
+    roc: [0],
+    iobRapid: [0],
+    iobRegular: [0],
+    iobNph: [0],
+    carbsAbsorbing: [0],
+    steps5min: [0],
+    hr: [70],
+    age: 30,
+    weight: 70,
+    diabetesDurationYears: 5,
+    isf: 50,
+    icr: 10,
+    regimenType: 0,
+    hypoUnawareness: 0,
+  };
+
+  // Call ML service
   try {
-    // Gather required data for prediction
-    const [profile, latestCGM, recentMeals, recentInsulin] = await Promise.all([
-      app.prisma.patientProfile.findUnique({ where: { userId } }),
-      app.prisma.cGMReading.findFirst({
-        where: { userId, isValid: true },
-        orderBy: { time: 'desc' },
-      }),
-      app.prisma.mealLog.findMany({
-        where: { userId, mealTime: { gte: new Date(Date.now() - 4 * 60 * 60 * 1000) } },
-        orderBy: { mealTime: 'desc' },
-      }),
-      app.prisma.insulinLog.findMany({
-        where: { userId, administeredAt: { gte: new Date(Date.now() - 8 * 60 * 60 * 1000) } },
-        orderBy: { administeredAt: 'desc' },
-      }),
-    ]);
-
-    if (!profile || !latestCGM) {
-      app.log.warn({ userId }, 'Insufficient data for prediction');
-      return;
-    }
-
-    // Prepare input for ML service
-    const input = buildPredictionInput(latestCGM, recentMeals, recentInsulin, profile);
-
-    // Call ML service
     const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
     const response = await axios.post(`${mlServiceUrl}/v1/predict/hypo`, input, {
       timeout: 5000,
@@ -194,128 +245,26 @@ async function triggerPrediction(app: any, userId: string) {
           modelVersion: pred.modelVersion,
         },
       });
+    }
 
-      // Create alerts if high probability
+    // Create alerts if needed
+    for (const pred of predictions) {
       if (pred.hypoProbability > 0.5) {
-        await createHypoAlert(app, userId, pred);
+        await app.prisma.hypoAlert.create({
+          data: {
+            userId,
+            predictionId: pred.id,
+            alertLevel: pred.severeHypoProbability > 0.3 ? 'EMERGENCY' : pred.hypoProbability > 0.7 ? 'URGENT' : 'WARNING',
+            message: `Hypoglycemia risk in ${pred.horizonMin} min: ${Math.round(pred.hypoProbability * 100)}% chance glucose < 70 mg/dL`,
+            recommendedAction: getRecommendedAction(pred.hypoProbability, pred.severeHypoProbability),
+            indianCarbOptions: getIndianCarbOptions(),
+          },
+        });
       }
     }
-
-    // Invalidate cache
-    await app.cache.delPattern(`predictions:${userId}:*`);
-
-  } catch (err) {
-    app.log.error({ err, userId }, 'Prediction failed');
+  } catch (error) {
+    console.error('Prediction trigger failed:', error);
   }
-}
-
-function buildPredictionInput(
-  latestCGM: any,
-  recentMeals: any[],
-  recentInsulin: any[],
-  profile: any
-) {
-  // This is a simplified version - in production, use the full feature engineering
-  const now = new Date();
-  const steps = 6; // 30 min at 5-min intervals
-
-  // Generate time-series features (simplified)
-  const glucose = Array(steps).fill(latestCGM.glucoseMgDl);
-  const roc = Array(steps).fill(0);
-  const iobRapid = Array(steps).fill(0);
-  const iobRegular = Array(steps).fill(0);
-  const iobNph = Array(steps).fill(0);
-  const carbsAbsorbing = Array(steps).fill(0);
-  const steps5min = Array(steps).fill(0);
-  const hr = Array(steps).fill(70);
-
-  // Calculate IOB from recent insulin
-  for (const insulin of recentInsulin) {
-    const minAgo = (now.getTime() - new Date(insulin.administeredAt).getTime()) / 60000;
-    if (minAgo <= 480) {
-      // Add to appropriate IOB array based on insulin type
-      // Simplified - in production use proper PK models
-    }
-  }
-
-  // Calculate carb absorption from recent meals
-  for (const meal of recentMeals) {
-    const minAgo = (now.getTime() - new Date(meal.mealTime).getTime()) / 60000;
-    if (minAgo <= 240 && meal.absorptionProfile) {
-      // Add absorption curve
-    }
-  }
-
-  return {
-    glucose,
-    roc,
-    iobRapid,
-    iobRegular,
-    iobNph,
-    carbsAbsorbing,
-    steps5min,
-    hr,
-    age: calculateAge(profile.dateOfBirth),
-    weight: Number(profile.weightKg || 70),
-    diabetesDurationYears: calculateDiabetesDuration(profile.diagnosisDate),
-    isf: Number(profile.isfMgDlPerU || 50),
-    icr: Number(profile.icrGPerU || 10),
-    regimenType: getRegimenType(profile.insulinRegimen),
-    hypoUnawareness: 0,
-  };
-}
-
-function calculateAge(dob: Date | null): number {
-  if (!dob) return 30;
-  const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const m = today.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-  return age;
-}
-
-function calculateDiabetesDuration(diagnosisDate: Date | null): number {
-  if (!diagnosisDate) return 5;
-  const years = (Date.now() - diagnosisDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-  return Math.max(0, Math.floor(years));
-}
-
-function getRegimenType(regimen: string): number {
-  switch (regimen) {
-    case 'BASAL_BOLUS': return 0;
-    case 'NPH_REGULAR': return 1;
-    case 'PREMIXED_30_70':
-    case 'PREMIXED_50_50': return 2;
-    case 'PUMP': return 3;
-    default: return 0;
-  }
-}
-
-async function createHypoAlert(app: any, userId: string, prediction: any) {
-  const horizon = prediction.horizonMin;
-  const prob = prediction.hypoProbability;
-  const severeProb = prediction.severeHypoProbability;
-
-  let alertLevel: 'WARNING' | 'URGENT' | 'EMERGENCY' = 'WARNING';
-  if (severeProb > 0.3 || (horizon === 30 && prob > 0.7)) alertLevel = 'EMERGENCY';
-  else if (prob > 0.6) alertLevel = 'URGENT';
-
-  const message = horizon === 30
-    ? `⚠️ Hypoglycemia risk in 30 min: ${Math.round(prob * 100)}% chance glucose < 70 mg/dL`
-    : `⚠️ Hypoglycemia risk in 60 min: ${Math.round(prob * 100)}% chance glucose < 70 mg/dL`;
-
-  const recommendedAction = getRecommendedAction(prob, severeProb);
-  const indianCarbOptions = getIndianCarbOptions();
-
-  await app.prisma.hypoAlert.create({
-    data: {
-      userId,
-      alertLevel,
-      message,
-      recommendedAction,
-      indianCarbOptions,
-    },
-  });
 }
 
 function getRecommendedAction(prob: number, severeProb: number): string {

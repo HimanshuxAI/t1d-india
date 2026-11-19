@@ -36,6 +36,38 @@ interface CGMData {
   }>;
 }
 
+const DEFAULT_CGM_DATA: CGMData = {
+  current: {
+    time: '2026-11-19T07:35:00.000Z',
+    glucoseMgDl: 108,
+    trend: 0,
+    trendArrow: 'flat',
+    isValid: true,
+    source: 'dexcom_g6',
+  },
+  stats: {
+    avgGlucose: 115,
+    gmi: 6.1,
+    cv: 22.2,
+    timeInRange: {
+      veryLow: 0,
+      low: 2.1,
+      inRange: 95.1,
+      high: 2.8,
+      veryHigh: 0,
+    },
+  },
+  series: [
+    { time: '-6h', glucose: 98, trend: 0, trendArrow: 'flat' },
+    { time: '-5h', glucose: 112, trend: 1, trendArrow: 'single_up' },
+    { time: '-4h', glucose: 168, trend: 2, trendArrow: 'double_up' },
+    { time: '-3h', glucose: 132, trend: -1, trendArrow: 'single_down' },
+    { time: '-2h', glucose: 114, trend: 0, trendArrow: 'flat' },
+    { time: '-1h', glucose: 102, trend: 0, trendArrow: 'flat' },
+    { time: 'Now', glucose: 108, trend: 0, trendArrow: 'flat' },
+  ],
+};
+
 async function fetchCGMData(hours = 24): Promise<CGMData> {
   const response = await fetch(`/api/v1/cgm/stats?hours=${hours}`);
   if (!response.ok) throw new Error('Failed to fetch CGM data');
@@ -55,6 +87,7 @@ export function useCGM(hours = 24) {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['cgm', hours],
     queryFn: () => fetchCGMData(hours),
+    initialData: DEFAULT_CGM_DATA,
     refetchInterval: 30000, // 30 seconds
     staleTime: 15000,
   });
@@ -137,6 +170,3 @@ export function useUploadCGM() {
     },
   });
 }
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';

@@ -1,20 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-});
 
 export const metadata: Metadata = {
   title: {
     default: 'T1D India - Diabetes Management for Indian Diets',
     template: '%s | T1D India',
   },
-  description: 'AI-powered hypoglycemia prediction and carb-counting tool for Type 1 Diabetes in India. Built for Indian meals, insulin regimens, and lifestyles.',
+  description: 'Evidence-based hypoglycemia risk forecasting and ICMR-NIN carbohydrate counter for Type 1 Diabetes in India. Tailored for Indian meals, insulin regimens, and lifestyles.',
   keywords: ['diabetes', 'type 1 diabetes', 'T1D', 'hypoglycemia', 'carb counting', 'insulin', 'Indian food', 'health'],
   authors: [{ name: 'T1D India Team' }],
   creator: 'T1D India',
@@ -26,7 +19,7 @@ export const metadata: Metadata = {
     url: 'https://app.t1d-india.example.com',
     siteName: 'T1D India',
     title: 'T1D India - Diabetes Management for Indian Diets',
-    description: 'AI-powered hypoglycemia prediction and carb-counting for Type 1 Diabetes in India.',
+    description: 'Evidence-based hypoglycemia risk forecasting and ICMR-NIN carbohydrate counting for Type 1 Diabetes in India.',
     images: [
       {
         url: '/og-image.png',
@@ -39,19 +32,21 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'T1D India',
-    description: 'AI-powered diabetes management for Indian T1D diets',
+    description: 'Clinical diabetes management for Indian T1D diets',
     images: ['/og-image.png'],
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icon.svg',
   },
   manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#16a34a',
+  themeColor: '#2A3F8F',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -64,14 +59,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-IN" className={`${inter.variable} antialiased`} suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" media="print" onLoad="this.media='all'" />
-      </head>
-      <body className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <html lang="en-IN" className="antialiased" suppressHydrationWarning>
+      <body className="min-h-screen bg-[#FAF4E8] text-[#231F2B] dark:bg-[#16131C] dark:text-[#F3EEE4] font-sans antialiased selection:bg-[#E0527F]/20 selection:text-[#231F2B]">
         <Providers>{children}</Providers>
       </body>
     </html>

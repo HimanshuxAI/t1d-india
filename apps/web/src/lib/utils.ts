@@ -75,14 +75,25 @@ export function getMealTypeColor(type: string): string {
   }
 }
 
+export function getInputMethodLabel(method: string): string {
+  switch (method) {
+    case 'PHOTO_ML': return 'Photo';
+    case 'PHOTO_OCR': return 'OCR Scan';
+    case 'VOICE': return 'Voice';
+    case 'COMPOSITE_SELECT': return 'Plate';
+    case 'BARCODE': return 'Barcode';
+    default: return 'Manual';
+  }
+}
+
 export function getInputMethodIcon(method: string): string {
   switch (method) {
-    case 'PHOTO_ML': return '📷';
-    case 'PHOTO_OCR': return '📷';
-    case 'VOICE': return '🎤';
-    case 'COMPOSITE_SELECT': return '🍽️';
-    case 'BARCODE': return '📱';
-    default: return '✏️';
+    case 'PHOTO_ML': return 'Photo';
+    case 'PHOTO_OCR': return 'Scan';
+    case 'VOICE': return 'Voice';
+    case 'COMPOSITE_SELECT': return 'Plate';
+    case 'BARCODE': return 'Barcode';
+    default: return 'Manual';
   }
 }
 

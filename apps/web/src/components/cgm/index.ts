@@ -1,5 +1,3 @@
-export { GlucoseCard } from './GlucoseCard';
-export { HypoAlertBanner } from './HypoAlertBanner';
-export { CGMChart } from './CGMChart';
-export { CGMStats } from './CGMStats';
-export { CGMUpload } from './CGMUpload';
+export { GlucoseCard } from './glucose-card';
+export { HypoAlertBanner } from './hypo-alert-banner';
+export { CGMChart } from './cgm-chart';

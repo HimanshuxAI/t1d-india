@@ -224,11 +224,24 @@ export function MealLoggingForm({ onSuccess, initialMealType }: MealLoggingFormP
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
-      if (data.items) {
-        data.items.forEach((item: any) => addItem(item));
+      const resJson = await res.json();
+      const detectedItems = resJson.data?.items || resJson.items || [];
+      if (detectedItems.length > 0) {
+        detectedItems.forEach((item: any) => {
+          addItem({
+            foodId: item.foodId || 'food-' + Date.now(),
+            name: item.name,
+            quantityG: item.quantityG || 100,
+            carbsG: item.carbsG || 0,
+            proteinG: item.proteinG || 0,
+            fatG: item.fatG || 0,
+            prepMethod: 'fresh',
+          });
+        });
+        toast.success(`NVIDIA Vision detected ${detectedItems.length} Indian food items!`);
+      } else {
+        toast.info('No foods identified on plate. Try another photo angle.');
       }
-      toast.success('Photo analyzed!');
     } catch (error) {
       toast.error('Photo analysis failed');
     } finally {
@@ -509,12 +522,22 @@ export function MealLoggingForm({ onSuccess, initialMealType }: MealLoggingFormP
                     <Camera className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                     <p className="text-lg font-medium">Take a photo of your meal</p>
                     <p className="text-sm text-muted-foreground">Or tap to choose from gallery</p>
-                    <button
-                      onClick={() => document.getElementById('photo-input')?.click()}
-                      className="mt-4 btn-outline"
-                    >
-                      Choose Photo
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('photo-input')?.click()}
+                        className="btn-outline text-xs"
+                      >
+                        Choose Photo from Gallery
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.location.href = '/meals/photo'}
+                        className="btn-primary text-xs"
+                      >
+                        Open Live Camera Plate Analyzer →
+                      </button>
+                    </div>
                   </>
                 )}
               </div>

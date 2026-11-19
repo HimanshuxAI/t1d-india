@@ -3,6 +3,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { AppError, ERROR_CODES } from '@t1d-india/shared';
+import { env } from '../config';
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
   // Clerk webhook for user sync
@@ -64,8 +65,17 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
   // Get current user profile
   app.get('/me', async (request) => {
+    // /auth/* is a public path, so fall back to the demo patient in dev.
+    const userId =
+      request.user?.id ??
+      (env.NODE_ENV !== 'production' ? env.DEMO_USER_ID : null);
+
+    if (!userId) {
+      throw new AppError(ERROR_CODES.UNAUTHORIZED, 'Authentication required', 401);
+    }
+
     const user = await app.prisma.user.findUnique({
-      where: { id: request.user!.id },
+      where: { id: userId },
       include: { profile: true },
     });
 
@@ -118,7 +128,10 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
   // Logout
   app.post('/logout', async (request, reply) => {
-    reply.clearCookie('refreshToken');
+    // @fastify/cookie is optional in this deployment
+    if (typeof reply.clearCookie === 'function') {
+      reply.clearCookie('refreshToken');
+    }
     return { success: true };
   });
 };

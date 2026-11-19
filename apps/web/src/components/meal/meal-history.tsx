@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { cn, formatTimeAgo, getMealTypeColor, getInputMethodIcon } from '@/lib/utils';
-import { Calendar, Filter, ChevronDown, ChevronRight, Utensils, Clock, Download, RefreshCw } from 'lucide-react';
+import { Calendar, Filter, ChevronDown, ChevronRight, Utensils, Clock, Download, RefreshCw, MapPin, Smile, Camera, Mic, Barcode, PenLine } from 'lucide-react';
 
 interface Meal {
   id: string;
@@ -234,7 +234,7 @@ export function MealHistory({ initialFilters, onFiltersChange }: MealHistoryProp
                     'Load More Meals'
                   )}
                 </button>
-              )}
+              </div>
             )}
           </>
         )}
@@ -251,8 +251,16 @@ function MealRow({ meal }: { meal: Meal }) {
     <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
       <div className="flex items-start gap-4">
         {/* Input method icon */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <span className="text-xl">{getInputMethodIcon(meal.inputMethod)}</span>
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#FAF4E8] dark:bg-[#1E1926] border border-[#231F2B]/10 dark:border-white/10 flex items-center justify-center text-[#2A3F8F] dark:text-[#7F93E6]">
+          {meal.inputMethod === 'PHOTO_ML' || meal.inputMethod === 'PHOTO_OCR' ? (
+            <Camera className="w-5 h-5" />
+          ) : meal.inputMethod === 'VOICE' ? (
+            <Mic className="w-5 h-5" />
+          ) : meal.inputMethod === 'BARCODE' ? (
+            <Barcode className="w-5 h-5" />
+          ) : (
+            <Utensils className="w-5 h-5" />
+          )}
         </div>
 
         {/* Meal info */}
@@ -296,17 +304,17 @@ function MealRow({ meal }: { meal: Meal }) {
             <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
               {meal.locationType && (
                 <span className="flex items-center gap-1">
-                  <span>📍</span> {meal.locationType}
+                  <MapPin className="w-3.5 h-3.5 text-muted-foreground" /> {meal.locationType}
                 </span>
               )}
               {meal.hungerLevel && (
                 <span className="flex items-center gap-1">
-                  <span>🍽️</span> Hunger: {meal.hungerLevel}/10
+                  <Utensils className="w-3.5 h-3.5 text-muted-foreground" /> Hunger: {meal.hungerLevel}/10
                 </span>
               )}
               {meal.moodTag && (
                 <span className="flex items-center gap-1">
-                  <span>😊</span> {meal.moodTag}
+                  <Smile className="w-3.5 h-3.5 text-muted-foreground" /> {meal.moodTag}
                 </span>
               )}
             </div>

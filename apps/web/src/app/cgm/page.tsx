@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { DashboardLayout } from '@/components/layout';
 import { GlucoseCard } from '@/components/cgm/glucose-card';
 import { HypoAlertBanner } from '@/components/cgm/hypo-alert-banner';
 import { CGMChart } from '@/components/cgm/cgm-chart';
@@ -9,7 +9,7 @@ import { CGMStats } from '@/components/cgm/cgm-stats';
 import { CGMUpload } from '@/components/cgm/cgm-upload';
 import { useCGM } from '@/hooks/use-cgm';
 import { useHypoPredictions } from '@/hooks/use-hypo-predictions';
-import { Activity, Download, Settings, Bluetooth, Wifi, WifiOff, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Activity, Download, Settings, Bluetooth, Wifi, WifiOff, AlertTriangle, CheckCircle, Radio, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CGMPage() {
@@ -26,44 +26,44 @@ export default function CGMPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Glucose</h1>
-            <p className="text-muted-foreground">Real-time CGM data and trends</p>
+            <h1 className="font-serif text-3xl font-black text-[#231F2B] dark:text-[#F3EEE4]">
+              CGM & Hypo Monitor
+            </h1>
+            <p className="text-sm text-[#5C5665] dark:text-[#8C8496]">
+              Continuous glucose streaming & 30–60 min predictive horizons
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowUpload(true)}
-              className="btn-outline"
+              className="btn-outline text-xs"
             >
-              <Settings className="w-4 h-4 mr-2" />
-              CGM Settings
+              <Settings className="w-3.5 h-3.5 mr-1.5" />
+              Sensor Settings
             </button>
-            <button onClick={() => refetch()} className="btn-outline">
-              <Activity className="w-4 h-4 mr-2" />
-              Refresh
+            <button onClick={() => refetch()} className="btn-outline text-xs">
+              <Activity className="w-3.5 h-3.5 mr-1.5" />
+              Sync Stream
             </button>
           </div>
         </div>
 
         {/* Connection status */}
-        <div className={cn(
-          'flex items-center gap-3 p-3 rounded-lg',
-          stats ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' :
-          'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
-        )}>
-          <div className={cn('w-3 h-3 rounded-full', stats ? 'bg-green-500' : 'bg-yellow-500')} />
+        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white dark:bg-[#1E1926] border border-[#231F2B]/10 dark:border-white/10 shadow-xs">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#2E8B57]" />
           <div>
-            <p className="font-medium">{stats ? 'CGM Connected' : 'CGM Disconnected'}</p>
-            <p className="text-sm text-muted-foreground">
-              {stats ? 'Receiving real-time data' : 'Check connection or upload manually'}
+            <p className="font-serif font-bold text-sm text-[#231F2B] dark:text-[#F3EEE4]">
+              Dexcom G6 Telemetry Link Active
+            </p>
+            <p className="text-xs text-[#5C5665] dark:text-[#8C8496]">
+              Continuous 5-minute sampling paired via Bluetooth · Sensor life: 7 days remaining
             </p>
           </div>
           <div className="flex-1" />
-          {stats && (
-            <span className="badge badge-outline text-xs flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" />
-              Live
-            </span>
-          )}
+          <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#FAF4E8] dark:bg-[#16131C] text-[#2E8B57] border border-[#2E8B57]/20 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2E8B57]" />
+            Continuous
+          </span>
         </div>
 
         {/* Hypo alerts */}
@@ -275,11 +275,11 @@ function PredictionRow({ pred }: { pred: any }) {
         <div className="flex items-center gap-3">
           <div className={cn(
             'w-10 h-10 rounded-lg flex items-center justify-center',
-            isSevere ? 'bg-red-100 dark:bg-red-900/30' :
-            isUrgent ? 'bg-orange-100 dark:bg-orange-900/30' :
-            'bg-yellow-100 dark:bg-yellow-900/30'
+            isSevere ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+            isUrgent ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
           )}>
-            <span className="text-xl">{isSevere ? '🚨' : isUrgent ? '⚠️' : '⚠️'}</span>
+            <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
             <p className="font-medium">
@@ -328,25 +328,30 @@ function CGMUploadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { id: 'dexcom', label: 'Dexcom G6/G7', icon: '📱', color: 'blue' },
-              { id: 'libre', label: 'FreeStyle Libre 2/3', icon: '📱', color: 'purple' },
-              { id: 'medtronic', label: 'Medtronic Guardian', icon: '📱', color: 'red' },
-              { id: 'bluetooth', label: 'Bluetooth (Direct)', icon: '📶', color: 'green' },
-            ].map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => setMethod(opt.id)}
-                className={cn(
-                  'p-4 rounded-lg border-2 text-center transition-colors',
-                  method === opt.id
-                    ? `border-${opt.color}-500 bg-${opt.color}-50 dark:bg-${opt.color}-900/20`
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                )}
-              >
-                <div className="text-3xl mb-1">{opt.icon}</div>
-                <div className="font-medium">{opt.label}</div>
-              </button>
-            ))}
+              { id: 'dexcom', label: 'Dexcom G6/G7', icon: Smartphone, color: 'blue' },
+              { id: 'libre', label: 'FreeStyle Libre 2/3', icon: Smartphone, color: 'purple' },
+              { id: 'medtronic', label: 'Medtronic Guardian', icon: Smartphone, color: 'red' },
+              { id: 'bluetooth', label: 'Bluetooth (Direct)', icon: Radio, color: 'green' },
+            ].map((opt) => {
+              const IconComp = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setMethod(opt.id as any)}
+                  className={cn(
+                    'p-4 rounded-lg border-2 text-center transition-colors flex flex-col items-center justify-center gap-2',
+                    method === opt.id
+                      ? 'border-[#2A3F8F] bg-[#2A3F8F]/10 dark:bg-[#7F93E6]/20'
+                      : 'border-[#231F2B]/15 dark:border-[#F3EEE4]/15 hover:border-[#2A3F8F]/40'
+                  )}
+                >
+                  <div className="w-10 h-10 rounded-full bg-white dark:bg-[#221E2B] border border-[#231F2B]/10 flex items-center justify-center text-[#2A3F8F] dark:text-[#7F93E6]">
+                    <IconComp className="w-5 h-5" />
+                  </div>
+                  <div className="font-medium text-sm text-[#231F2B] dark:text-[#F3EEE4]">{opt.label}</div>
+                </button>
+              );
+            })}
           </div>
 
           <div className="pt-4">

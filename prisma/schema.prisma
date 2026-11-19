@@ -209,7 +209,7 @@ model Food {
   id              String   @id @default(uuid())
   fdcId           Int?     @unique @map("fdc_id")
   ninCode         String?  @unique @map("nin_code")
-  nameEn          String   @map("name_en")
+  nameEn          String   @unique @map("name_en")
   nameHi          String?  @map("name_hi")
   nameRegional    Json     @default("{}") @map("name_regional")
   category        String
@@ -256,7 +256,7 @@ model Food {
 
 model CompositeMeal {
   id              String   @id @default(uuid())
-  nameEn          String   @map("name_en")
+  nameEn          String   @unique @map("name_en")
   nameHi          String?  @map("name_hi")
   nameRegional    Json     @default("{}") @map("name_regional")
   description     String?
@@ -327,6 +327,9 @@ model MealLog {
   clientId        String?  @map("client_id")
   createdAt       DateTime @default(now()) @map("created_at")
 
+  // Reverse relation from InsulinLog
+  insulinLogs     InsulinLog[] @relation("MealInsulin")
+
   @@index([userId, mealTime(sort: Desc)])
   @@map("meal_logs")
 }
@@ -364,7 +367,7 @@ model InsulinLog {
 
   // Context
   relatedMealLogId    String?     @map("related_meal_log_id")
-  relatedMealLog      MealLog?    @relation(fields: [relatedMealLogId], references: [id], onDelete: SetNull)
+  relatedMealLog      MealLog?    @relation("MealInsulin", fields: [relatedMealLogId], references: [id], onDelete: SetNull)
   glucoseAtInjection  Int?        @map("glucose_at_injection")
   carbEstimateG       Decimal?    @db.Decimal(6, 2) @map("carb_estimate_g")
   calculatorRecommendedU Decimal? @db.Decimal(4, 2) @map("calculator_recommended_u")
@@ -445,6 +448,9 @@ model HypoPrediction {
   wasHypo30min        Boolean? @map("was_hypo_30min")
   wasHypo60min        Boolean? @map("was_hypo_60min")
 
+  // Reverse relation from HypoAlert
+  alerts              HypoAlert[] @relation("PredictionAlerts")
+
   createdAt           DateTime @default(now()) @map("created_at")
 
   @@index([userId, predictedAt(sort: Desc)])
@@ -456,7 +462,7 @@ model HypoAlert {
   userId                String   @map("user_id")
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   predictionId          String?  @map("prediction_id")
-  prediction            HypoPrediction? @relation(fields: [predictionId], references: [id], onDelete: SetNull)
+  prediction            HypoPrediction? @relation("PredictionAlerts", fields: [predictionId], references: [id], onDelete: SetNull)
 
   triggeredAt           DateTime @default(now()) @map("triggered_at")
   alertLevel            AlertLevel @map("alert_level")

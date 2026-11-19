@@ -2,13 +2,34 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { FoodSearchParamsSchema, PaginationParamsSchema, AppError, ERROR_CODES } from '@t1d-india/shared';
+
+const FoodSearchParamsJsonSchema = zodToJsonSchema(FoodSearchParamsSchema, {
+  target: 'jsonSchema7',
+  name: 'FoodSearchParams',
+});
+const PaginationParamsJsonSchema = zodToJsonSchema(PaginationParamsSchema, {
+  target: 'jsonSchema7',
+  name: 'PaginationParams',
+});
+const FoodListQueryJsonSchema = zodToJsonSchema(
+  PaginationParamsSchema.extend({
+    category: z.string().optional(),
+    region: z.string().optional(),
+    isComposite: z.coerce.boolean().optional(),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'FoodListQuery',
+  },
+);
 
 export const foodRoutes: FastifyPluginAsync = async (app) => {
   // Search foods with autocomplete
   app.get('/search', {
     schema: {
-      querystring: FoodSearchParamsSchema,
+      querystring: FoodSearchParamsJsonSchema,
     },
   }, async (request) => {
     const { q, locale, category, region, limit } = request.query as any;
@@ -125,11 +146,7 @@ export const foodRoutes: FastifyPluginAsync = async (app) => {
   // List foods with pagination
   app.get('/', {
     schema: {
-      querystring: PaginationParamsSchema.extend({
-        category: z.string().optional(),
-        region: z.string().optional(),
-        isComposite: z.coerce.boolean().optional(),
-      }),
+      querystring: FoodListQueryJsonSchema,
     },
   }, async (request) => {
     const { page, limit, sortBy, sortOrder, category, region, isComposite } = request.query as any;

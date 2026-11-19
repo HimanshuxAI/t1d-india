@@ -1,3 +1,3 @@
-export { InsulinCalculatorCard } from './InsulinCalculatorCard';
-export { InsulinHistory } from './InsulinHistory';
-export { InsulinSummary } from './InsulinSummary';
+export { InsulinCalculatorCard } from './insulin-calculator-card';
+export { InsulinHistory } from './insulin-history';
+export { InsulinSummary } from './insulin-summary';

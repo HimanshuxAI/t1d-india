@@ -2,6 +2,7 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   CGMBatchUploadSchema,
   CGMBatchUploadResponseSchema,
@@ -13,12 +14,50 @@ import {
 } from '@t1d-india/shared';
 import { roundTo5Min, generate5MinIntervals } from '@t1d-india/shared';
 
+const CGMBatchUploadJsonSchema = zodToJsonSchema(CGMBatchUploadSchema, {
+  target: 'jsonSchema7',
+  name: 'CGMBatchUpload',
+});
+const CGMBatchUploadResponseJsonSchema = zodToJsonSchema(CGMBatchUploadResponseSchema, {
+  target: 'jsonSchema7',
+  name: 'CGMBatchUploadResponse',
+});
+const CGMReadingsQueryJsonSchema = zodToJsonSchema(
+  PaginationParamsSchema.extend({
+    startTime: z.string().datetime().optional(),
+    endTime: z.string().datetime().optional(),
+    validOnly: z.coerce.boolean().default(true),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'CGMReadingsQuery',
+  },
+);
+const CGMAgpQueryJsonSchema = zodToJsonSchema(
+  z.object({
+    days: z.coerce.number().int().min(1).max(90).default(14),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'CGMAGPQuery',
+  },
+);
+const CGMStatsQueryJsonSchema = zodToJsonSchema(
+  z.object({
+    hours: z.coerce.number().int().min(1).max(168).default(24),
+  }),
+  {
+    target: 'jsonSchema7',
+    name: 'CGMStatsQuery',
+  },
+);
+
 export const cgmRoutes: FastifyPluginAsync = async (app) => {
   // Batch upload CGM readings
   app.post('/readings/batch', {
     schema: {
-      body: CGMBatchUploadSchema,
-      response: { 202: CGMBatchUploadResponseSchema },
+      body: CGMBatchUploadJsonSchema,
+      response: { 202: CGMBatchUploadResponseJsonSchema },
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER'),
   }, async (request, reply) => {
@@ -98,6 +137,16 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
 
   // Get latest CGM reading
   app.get('/latest', {
+    schema: {
+      response: { 200: z.object({
+        time: z.string().datetime(),
+        glucoseMgDl: z.number(),
+        trend: z.number().nullable(),
+        trendArrow: z.string().nullable(),
+        isValid: z.boolean(),
+        source: z.string(),
+      }).nullable() },
+    },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
     const userId = request.user!.id;
@@ -131,20 +180,21 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
   // Get CGM readings for time range
   app.get('/readings', {
     schema: {
-      querystring: PaginationParamsSchema.extend({
-        startTime: z.string().datetime(),
-        endTime: z.string().datetime().optional(),
-        validOnly: z.coerce.boolean().default(true),
-      }),
+      querystring: CGMReadingsQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
     const userId = request.user!.id;
     const { page, limit, sortBy, sortOrder, startTime, endTime, validOnly } = request.query as any;
 
+    // Default window: last 24 hours when startTime is omitted
+    const start = startTime
+      ? new Date(startTime)
+      : new Date(Date.now() - 24 * 60 * 60 * 1000);
+
     const where: any = {
       userId,
-      time: { gte: new Date(startTime) },
+      time: { gte: start },
     };
     if (endTime) where.time.lte = new Date(endTime);
     if (validOnly) where.isValid = true;
@@ -182,9 +232,7 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
   // Get AGP (Ambulatory Glucose Profile) data
   app.get('/agp', {
     schema: {
-      querystring: z.object({
-        days: z.coerce.number().int().min(1).max(90).default(14),
-      }),
+      querystring: CGMAgpQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
@@ -295,9 +343,7 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
   // Get glucose statistics for dashboard
   app.get('/stats', {
     schema: {
-      querystring: z.object({
-        hours: z.coerce.number().int().min(1).max(168).default(24),
-      }),
+      querystring: CGMStatsQueryJsonSchema,
     },
     preHandler: app.requireRole('PATIENT', 'CAREGIVER', 'CLINICIAN'),
   }, async (request) => {
@@ -324,6 +370,9 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
         trendArrow: null,
         stats: {
           avg: 0,
+          avgGlucose: 0,
+          gmi: 0,
+          cv: 0,
           min: 0,
           max: 0,
           timeInRange: { veryLow: 0, low: 0, inRange: 0, high: 0, veryHigh: 0 },
@@ -342,6 +391,11 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
     const veryHigh = glucoseValues.filter((g) => g > 250).length;
     const total = glucoseValues.length;
 
+    const avg = glucoseValues.reduce((a, b) => a + b, 0) / total;
+    const sd = stdDev(glucoseValues);
+    const gmi = 3.31 + 0.02392 * avg;
+    const cv = avg > 0 ? (sd / avg) * 100 : 0;
+
     return {
       current: {
         time: current.time.toISOString(),
@@ -350,7 +404,10 @@ export const cgmRoutes: FastifyPluginAsync = async (app) => {
         trendArrow: current.trendArrow,
       },
       stats: {
-        avg: Math.round(glucoseValues.reduce((a, b) => a + b, 0) / total),
+        avg: Math.round(avg),
+        avgGlucose: Math.round(avg),
+        gmi: Math.round(gmi * 10) / 10,
+        cv: Math.round(cv * 10) / 10,
         min: Math.min(...glucoseValues),
         max: Math.max(...glucoseValues),
         timeInRange: {

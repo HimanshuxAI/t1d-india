@@ -1,61 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Indian T1D Brand Identity: Chai Cream (#FAF4E8), Kaajal (#231F2B), Neel Indigo (#2A3F8F), Gulal Pink (#E0527F), Mehendi (#E6EBD5) */
+    --background: 42 55% 95%;      /* #FAF4E8 Chai cream */
+    --foreground: 263 16% 15%;     /* #231F2B Kaajal */
+    --card: 0 0% 100%;             /* Crisp ivory paper surface */
+    --card-foreground: 263 16% 15%;/* #231F2B Kaajal */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 51 91% 53%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
-    --radius: 0.5rem;
+    --popover-foreground: 263 16% 15%;
+    --primary: 227 55% 36%;        /* #2A3F8F Neel Indigo */
+    --primary-foreground: 42 55% 95%;
+    --secondary: 341 71% 60%;      /* #E0527F Gulal Pink */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 38 28% 90%;           /* Subtle warm cream */
+    --muted-foreground: 260 10% 45%;/* #5C5665 Soft Kaajal */
+    --accent: 73 31% 88%;          /* #E6EBD5 Mehendi tint */
+    --accent-foreground: 263 16% 15%;
+    --destructive: 358 65% 55%;    /* #D64045 Clinical Low */
+    --destructive-foreground: 0 0% 100%;
+    --border: 38 22% 86%;          /* #E5DFD4 Warm 1.5px border */
+    --input: 38 22% 86%;
+    --ring: 227 55% 36%;           /* Neel Indigo ring */
+    --radius: 0.875rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142 70% 45%;
-    --primary-foreground: 142 76% 36%;
-    --secondary: 51 91% 53%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142 70% 45%;
+    --background: 263 19% 9%;      /* #16131C Deep night */
+    --foreground: 40 36% 92%;      /* #F3EEE4 Warm white */
+    --card: 257 18% 14%;           /* #221E2B Dark surface */
+    --card-foreground: 40 36% 92%;
+    --popover: 257 18% 14%;
+    --popover-foreground: 40 36% 92%;
+    --primary: 228 68% 70%;        /* #7F93E6 Neel Light */
+    --primary-foreground: 263 19% 9%;
+    --secondary: 341 83% 72%;      /* #F27BA0 Gulal Light */
+    --secondary-foreground: 263 19% 9%;
+    --muted: 257 15% 20%;
+    --muted-foreground: 257 10% 65%;
+    --accent: 73 20% 25%;
+    --accent-foreground: 40 36% 92%;
+    --destructive: 358 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 257 15% 24%;
+    --input: 257 15% 24%;
+    --ring: 228 68% 70%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.011em;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, .font-display, .font-serif {
+    font-family: 'Fraunces', Georgia, serif;
+    font-feature-settings: "liga" 1, "opsz" 1;
   }
 }
 
@@ -74,65 +83,65 @@
   }
   
   .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20;
+    @apply bg-white/90 backdrop-blur-md border border-[#231F2B]/10;
   }
   
   .glass-dark {
-    @apply bg-gray-900/80 backdrop-blur-lg border border-gray-700/50;
+    @apply bg-[#221E2B]/90 backdrop-blur-md border border-white/10;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98];
   }
   
   .btn-primary {
-    @apply btn bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply btn bg-[#2A3F8F] text-[#FAF4E8] hover:bg-[#223273] shadow-sm hover:shadow;
   }
   
   .btn-secondary {
-    @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/90;
+    @apply btn bg-[#E0527F] text-white hover:bg-[#C93665] shadow-sm hover:shadow;
   }
   
   .btn-destructive {
-    @apply btn bg-destructive text-destructive-foreground hover:bg-destructive/90;
+    @apply btn bg-[#D64045] text-white hover:bg-[#B92F34] shadow-sm;
   }
   
   .btn-outline {
-    @apply btn border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+    @apply btn border border-[#231F2B]/15 dark:border-white/15 bg-white dark:bg-[#221E2B] text-[#231F2B] dark:text-[#F3EEE4] hover:bg-[#FAF4E8] dark:hover:bg-[#2A2536];
   }
   
   .btn-ghost {
-    @apply btn hover:bg-accent hover:text-accent-foreground;
+    @apply btn text-[#231F2B] dark:text-[#F3EEE4] hover:bg-[#FAF4E8] dark:hover:bg-[#221E2B];
   }
   
   .btn-link {
-    @apply btn text-primary underline-offset-4 hover:underline;
+    @apply btn text-[#2A3F8F] dark:text-[#7F93E6] underline-offset-4 hover:underline;
   }
   
   .input {
-    @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-11 w-full rounded-xl border border-[#231F2B]/15 dark:border-white/15 bg-white dark:bg-[#221E2B] px-3.5 py-2 text-sm text-[#231F2B] dark:text-[#F3EEE4] ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#8C8496] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2A3F8F] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50;
   }
   
   .card {
-    @apply rounded-xl border bg-card text-card-foreground shadow-sm;
+    @apply rounded-2xl border border-[#231F2B]/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#221E2B] text-card-foreground shadow-[0_2px_12px_rgba(35,31,43,0.04)] transition-all;
   }
   
   .card-header {
-    @apply flex flex-col space-y-1.5 p-6;
+    @apply flex flex-col space-y-1.5 p-6 pb-4;
   }
   
   .card-title {
-    @apply text-2xl font-semibold leading-none tracking-tight;
+    @apply font-serif text-2xl font-bold leading-none tracking-tight text-[#231F2B] dark:text-[#F3EEE4];
   }
   
   .card-description {
-    @apply text-sm text-muted-foreground;
+    @apply text-sm text-[#5C5665] dark:text-gray-400;
   }
   
   .card-content {
-    @apply p-6 pt-0;
+    @apply p-6 pt-2;
   }
   
   .card-footer {
@@ -140,23 +149,23 @@
   }
   
   .badge {
-    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   }
   
   .badge-primary {
-    @apply badge border-transparent bg-primary text-primary-foreground hover:bg-primary/80;
+    @apply badge border-transparent bg-[#2A3F8F] text-white;
   }
   
   .badge-secondary {
-    @apply badge border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply badge border-transparent bg-[#E0527F] text-white;
   }
   
   .badge-destructive {
-    @apply badge border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80;
+    @apply badge border-transparent bg-[#D64045] text-white;
   }
   
   .badge-outline {
-    @apply badge text-foreground;
+    @apply badge border-[#231F2B]/15 dark:border-white/15 bg-transparent text-[#231F2B] dark:text-[#F3EEE4];
   }
 }
 

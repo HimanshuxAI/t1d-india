@@ -1127,7 +1127,7 @@ const translations: Record<LanguageCode, Partial<Translations>> = {
     'foods.fried': 'வறுத்தது',
     'foods.roasted': 'பொரித்தது',
     'foods.baked': 'ஒப்பிட்டது',
-    'foods.pressure_cooked': 'த "");
+    'foods.pressure_cooked': 'அழுத்த சமையல்',
   },
   
   te: {
@@ -1492,18 +1492,6 @@ const translations: Record<LanguageCode, Partial<Translations>> = {
     'a11y.password_visible': 'पासवर्ड दाखवा',
     'a11y.password_hidden': 'पासवर्ड लपवा',
   },
-};
-
-// Add remaining languages (mr, gu, bn, pa, kn, ml, or, as) with similar structure
-// For brevity, showing structure only
-mr: {},
-gu: {},
-bn: {},
-pa: {},
-kn: {},
-ml: {},
-or: {},
-as: {},
 };
 
 // Language context

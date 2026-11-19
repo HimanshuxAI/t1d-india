@@ -265,7 +265,7 @@ async function manualSync(): Promise<void> {
   }
 
   // Update last sync time
-  await updateLastSyncTime();
+  await updateLastSynced();
 }
 
 // Get sync status
@@ -478,8 +478,27 @@ export async function registerPeriodicSync(): Promise<void> {
 
 // Initialize offline sync
 export async function initializeOfflineSync(): Promise<void> {
-  // Register service worker
+  // In development, unregister service workers and clear cache to avoid stale bundle caching
   if ('serviceWorker' in navigator) {
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        if (typeof caches !== 'undefined') {
+          const keys = await caches.keys();
+          for (const key of keys) {
+            await caches.delete(key);
+          }
+        }
+        console.log('[OfflineSync] Dev mode: Service workers cleared');
+      } catch (e) {
+        console.warn('Failed clearing service worker in dev:', e);
+      }
+      return;
+    }
+
     try {
       await navigator.serviceWorker.register('/sw.js');
       console.log('[OfflineSync] Service worker registered');

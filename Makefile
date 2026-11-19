@@ -59,6 +59,12 @@ install:
 # Development
 # ============================================
 
+demo:
+	./scripts/start-demo.sh
+
+demo-ml:
+	./scripts/start-demo.sh --with-ml
+
 dev:
 	npm run dev:api & npm run dev:ml
 

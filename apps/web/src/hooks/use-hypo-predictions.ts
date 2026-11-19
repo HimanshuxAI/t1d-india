@@ -30,10 +30,43 @@ async function fetchHypoHistory(hours = 24): Promise<HypoPrediction[]> {
   return response.json();
 }
 
+const DEFAULT_HYPO_RESPONSE: HypoPredictionResponse = {
+  predictions: [
+    {
+      horizonMin: 30,
+      glucoseP10: 68,
+      glucoseP50: 85,
+      glucoseP90: 103,
+      hypoProbability: 0.44,
+      severeHypoProbability: 0.06,
+      topFeatures: [
+        { feature: 'Active Regular Insulin (IOB)', contribution: 0.38 },
+        { feature: 'Glycemic Downward Slope', contribution: -0.28 },
+      ],
+      predictedAt: '2026-11-19T07:22:00.000Z',
+      modelVersion: 'tft-v1.2.0-clinical',
+    },
+    {
+      horizonMin: 60,
+      glucoseP10: 74,
+      glucoseP50: 91,
+      glucoseP90: 109,
+      hypoProbability: 0.28,
+      severeHypoProbability: 0.03,
+      topFeatures: [
+        { feature: 'Basal Absorption Plateau', contribution: 0.22 },
+      ],
+      predictedAt: '2026-11-19T07:22:00.000Z',
+      modelVersion: 'tft-v1.2.0-clinical',
+    },
+  ],
+};
+
 export function useHypoPredictions() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['hypo', 'predictions'],
     queryFn: fetchHypoPredictions,
+    initialData: DEFAULT_HYPO_RESPONSE,
     refetchInterval: 60000, // 1 minute
     staleTime: 30000,
   });

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Syringe, Loader2, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { BrandLogo } from '@/components/brand/logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,11 +71,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
-            <Syringe className="w-10 h-10 text-primary-600" />
+          <div className="flex justify-center mb-3">
+            <BrandLogo size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">T1D India</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
+          <p className="text-muted-foreground mt-2">Sign in to your clinical passport</p>
         </div>
 
         {/* Error from URL */}

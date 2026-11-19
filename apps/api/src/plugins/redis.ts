@@ -2,6 +2,7 @@
 
 import Redis from 'ioredis';
 import { FastifyPluginAsync } from 'fastify';
+import fp from 'fastify-plugin';
 import { env } from '../config';
 
 declare module 'fastify' {
@@ -83,4 +84,4 @@ const redisPlugin: FastifyPluginAsync = async (app) => {
   });
 };
 
-export default redisPlugin;
+export default fp(redisPlugin);
