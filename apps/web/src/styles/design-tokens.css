@@ -1,0 +1,236 @@
+/* ============================================
+   T1D INDIA - DESIGN TOKENS
+   Indian, warm, human - not AI-generated
+   ============================================ */
+
+:root {
+  /* ============================================
+     BRAND COLORS (60-30-10)
+     ============================================ */
+
+  /* Background (60%) */
+  --color-bg-primary: #FAF4E8;        /* Chai cream - page background */
+  --color-bg-card: #FFFFFF;           /* Cards on cream */
+  --color-bg-surface: #FFFFFF;        /* Elevated surfaces */
+
+  /* Text */
+  --color-text-primary: #231F2B;      /* Kaajal - never pure black */
+  --color-text-secondary: #5A5263;    /* Muted kaajal */
+  --color-text-muted: #8B8294;        /* Subtle kaajal */
+  --color-text-inverse: #F3EEE4;      /* On dark surfaces */
+
+  /* Primary (30%) - Neel Indigo */
+  --color-primary: #2A3F8F;           /* Nav, buttons, links, headers */
+  --color-primary-hover: #1E3070;     /* Hover state */
+  --color-primary-light: #E8EBF8;     /* Subtle backgrounds */
+  --color-primary-focus: #15225A;     /* Focus ring */
+
+  /* Accent (10%) - Gulal Pink */
+  --color-accent: #E0527F;            /* Highlights, CTAs, photo/voice actions */
+  --color-accent-hover: #C93D68;      /* Hover state */
+  --color-accent-light: #FCEEF3;      /* Subtle backgrounds */
+
+  /* Soft Surface - Mehendi Tint */
+  --color-surface-soft: #E6EBD5;      /* Info panels, family mode, empty states */
+  --color-surface-soft-hover: #D8DDC7; /* Hover state */
+
+  /* ============================================
+     CLINICAL COLORS (Reserved for glucose/alerts ONLY)
+     Never mix with brand colors
+     ============================================ */
+
+  --color-glucose-very-low: #8E1B2E;   /* <54 mg/dL - Critical */
+  --color-glucose-low: #D64045;        /* <70 mg/dL - Warning */
+  --color-glucose-in-range: #3A9D6E;   /* 70-180 mg/dL - Good */
+  --color-glucose-high: #E8A33D;       /* >180 mg/dL - Caution */
+  --color-glucose-very-high: #C46A1C;  /* >250 mg/dL - Danger */
+
+  /* Alert states (semantic) */
+  --color-alert-critical: #8E1B2E;     /* Emergency */
+  --color-alert-warning: #D64045;      /* Urgent */
+  --color-alert-caution: #E8A33D;      /* Warning */
+  --color-alert-info: #2A3F8F;         /* Info (uses primary) */
+  --color-alert-success: #3A9D6E;      /* Success */
+
+  /* ============================================
+     SURFACES & BORDERS
+     ============================================ */
+
+  /* Borders - thin, paper-like */
+  --border-width: 1.5px;
+  --border-color: #D8CEBF;              /* Warm paper edge */
+  --border-color-soft: #E8DCC8;         /* Subtle */
+  --border-color-strong: #B8A890;       /* Focus/active */
+
+  /* Surfaces - flat, paper-like */
+  --surface-elevation-0: #FAF4E8;       /* Page background */
+  --surface-elevation-1: #FFFFFF;       /* Cards */
+  --surface-elevation-2: #F5F0E3;       /* Elevated panels */
+  --surface-elevation-3: #EDE5D8;       /* Modals, dropdowns */
+
+  /* Shadows - subtle, paper-like */
+  --shadow-1: 0 1px 2px rgba(35, 31, 43, 0.04), 0 1px 4px rgba(35, 31, 43, 0.03);
+  --shadow-2: 0 4px 8px rgba(35, 31, 43, 0.05), 0 2px 4px rgba(35, 31, 43, 0.03);
+  --shadow-3: 0 8px 24px rgba(35, 31, 43, 0.06), 0 4px 12px rgba(35, 31, 43, 0.04);
+  --shadow-focus: 0 0 0 3px rgba(42, 63, 143, 0.15);
+
+  /* ============================================
+     SPACING & LAYOUT
+     ============================================ */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Container */
+  --container-max: 1200px;
+  --container-padding: 24px;
+
+  /* ============================================
+     TRANSITIONS & ANIMATION
+     ============================================ */
+
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Reduced motion */
+  --duration-reduced: 0.01ms;
+
+  /* ============================================
+     Z-INDEX
+     ============================================ */
+
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-popover: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+[data-theme="dark"] {
+  /* Backgrounds */
+  --color-bg-primary: #16131C;
+  --color-bg-card: #221E2B;
+  --color-bg-surface: #2A2533;
+
+  /* Text */
+  --color-text-primary: #F3EEE4;
+  --color-text-secondary: #C9C0D1;
+  --color-text-muted: #8B8294;
+  --color-text-inverse: #231F2B;
+
+  /* Brand colors - lightened for dark mode */
+  --color-primary: #7F93E6;
+  --color-primary-hover: #9AB3F0;
+  --color-primary-light: #2D2550;
+  --color-primary-focus: #5A7CE6;
+
+  --color-accent: #F27BA0;
+  --color-accent-hover: #F59EC4;
+  --color-accent-light: #4A2038;
+
+  --color-surface-soft: #2D2838;
+  --color-surface-soft-hover: #3A3348;
+
+  /* Surfaces */
+  --surface-elevation-0: #16131C;
+  --surface-elevation-1: #221E2B;
+  --surface-elevation-2: #2A2533;
+  --surface-elevation-3: #2D2838;
+
+  /* Borders */
+  --border-color: #3A3348;
+  --border-color-soft: #2D2838;
+  --border-color-strong: #5A4E6E;
+
+  /* Shadows */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-2: 0 4px 8px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(127, 147, 230, 0.3);
+
+  /* Shadows on dark are deeper */
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-3: 0 12px 28px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: var(--duration-reduced) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--duration-reduced) !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   HIGH CONTRAST MODE
+   ============================================ */
+
+@media (prefers-contrast: more) {
+  :root {
+    --border-width: 2px;
+    --border-color: #231F2B;
+    --border-color-strong: #231F2B;
+    --color-primary: #1E3070;
+    --color-accent: #C93D68;
+    --color-glucose-very-low: #8E1B2E;
+    --color-glucose-low: #D64045;
+    --color-glucose-in-range: #2D7D4E;
+    --color-glucose-high: #C47A1A;
+    --color-glucose-very-high: #C46A1C;
+  }
+
+  [data-theme="dark"] {
+    --color-primary: #A8B8F0;
+    --color-accent: #F7A8C0;
+    --color-glucose-very-low: #FF6B6B;
+    --color-glucose-low: #FF9F43;
+    --color-glucose-in-range: #6BCB77;
+    --color-glucose-high: #FFD93D;
+    --color-glucose-very-high: #FF6B6B;
+  }
+}
+
+/* ============================================
+   HIGH CONTRAST + REDUCED MOTION
+   ============================================ */
+
+@media (prefers-contrast: more) and (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,637 @@
+/* ============================================
+   T1D INDIA - TYPOGRAPHY SYSTEM
+   Characterful serif for headings, clean sans for body
+   ============================================ */
+
+/* ============================================
+   FONT FACES
+   ============================================ */
+
+/* Fraunces - Characterful serif for headings */
+/* Weights: 400, 500, 600, 700, 900 */
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDItaffQ0Qk4Yj5vUjXVoWzTqA.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDItaffQ0Qk4Yj5vUjXVoWzTqA.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDItaffQ0Qk4Yj5vUjXVoWzTqA.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDItaffQ0Qk4Yj5vUjXVoWzTqA.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDItaffQ0Qk4Yj5vUjXVoWzTqA.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fraunces Italic for special emphasis */
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDIyaffQ0Qk4Yj5vUjXVoxzTqA.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('https://fonts.gstatic.com/s/fraunces/v30/LDIyaffQ0Qk4Yj5vUjXVoxzTqA.woff2') format('woff2');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Inter - Clean, readable body text */
+/* Weights: 300, 400, 500, 600, 700 */
+@font-face {
+  font-family: 'Inter';
+  src: url('https://fonts.gstatic.com/s/inter/v19/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Noto Sans Devanagari for Hindi */
+/* Weights: 400, 500, 600, 700 */
+@font-face {
+  font-family: 'Noto Sans Devanagari';
+  src: url('https://fonts.gstatic.com/s/notosansdevanagari/v23/na3fZwZn3qaaK1BEIU9pgRSCxfjtV4w.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Devanagari';
+  src: url('https://fonts.gstatic.com/s/notosansdevanagari/v23/na3fZwZn3qaaK1BEIU9pgRSCxfjtV4w.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Devanagari';
+  src: url('https://fonts.gstatic.com/s/notosansdevanagari/v23/na3fZwZn3qaaK1BEIU9pgRSCxfjtV4w.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Devanagari';
+  src: url('https://fonts.gstatic.com/s/notosansdevanagari/v23/na3fZwZn3qaaK1BEIU9pgRSCxfjtV4w.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Noto Sans Tamil */
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  src: url('https://fonts.gstatic.com/s/notosanstamil/v19/na3fZwZn3qaaK1BEIU9pgRSCxfjtV4w.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Noto Sans Telugu */
+@font-face {
+  font-family: 'Noto Sans Telugu';
+  src: url('https://fonts.gstatic.com/s/notosanstelugu/v19/na3fZwZn3qaaK1BEIU9pgRSCxfjtV4w.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================
+   CSS CUSTOM PROPERTIES FOR TYPOGRAPHY
+   ============================================ */
+
+:root {
+  /* Font Families */
+  --font-heading: 'Fraunces', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Georgia', 'Cambria', 'Times New Roman', serif;
+  --font-body: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+
+  /* Font Weights */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
+
+  /* Font Sizes - Fluid, responsive using clamp() */
+  /* Mobile-first, scales up on larger screens */
+
+  /* Display / Hero */
+  --text-display: clamp(2.5rem, 5vw + 1rem, 4.5rem);      /* 40-72px */
+  --text-display-weight: 700;
+
+  /* Headings */
+  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);            /* 32-56px */
+  --text-h1-weight: 700;
+  --text-h1-line-height: 1.15;
+
+  --text-h2: clamp(1.75rem, 2.5vw + 1rem, 2.75rem);      /* 28-44px */
+  --text-h2-weight: 600;
+  --text-h2-line-height: 1.2;
+
+  --text-h3: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);      /* 24-36px */
+  --text-h3-weight: 600;
+  --text-h3-line-height: 1.25;
+
+  --text-h4: clamp(1.25rem, 1.5vw + 0.75rem, 1.75rem);   /* 20-28px */
+  --text-h4-weight: 600;
+  --text-h4-line-height: 1.3;
+
+  --text-h5: clamp(1.125rem, 1.25vw + 0.5rem, 1.5rem);   /* 18-24px */
+  --text-h5-weight: 600;
+  --text-h5-line-height: 1.35;
+
+  --text-h6: clamp(1rem, 1vw + 0.5rem, 1.25rem);         /* 16-20px */
+  --text-h6-weight: 600;
+  --text-h6-line-height: 1.4;
+
+  /* Body Text */
+  --text-lg: clamp(1.125rem, 1vw + 0.75rem, 1.25rem);    /* 18-20px */
+  --text-lg-line-height: 1.6;
+
+  --text-base: clamp(1rem, 0.875vw + 0.75rem, 1.125rem); /* 16-18px */
+  --text-base-line-height: 1.65;
+
+  --text-sm: clamp(0.875rem, 0.75vw + 0.625rem, 1rem);   /* 14-16px */
+  --text-sm-line-height: 1.55;
+
+  --text-xs: clamp(0.75rem, 0.5vw + 0.5rem, 0.875rem);   /* 12-14px */
+  --text-xs-line-height: 1.5;
+
+  /* Special */
+  --text-caption: 0.75rem;                                /* 12px fixed */
+  --text-caption-line-height: 1.5;
+
+  --text-button: 0.875rem;                                /* 14px fixed */
+  --text-button-line-height: 1.4;
+
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.04em;
+  --tracking-widest: 0.08em;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] {
+  /* Slightly larger text for better readability in dark mode */
+  --text-base: clamp(1.0625rem, 0.875vw + 0.8125rem, 1.1875rem); /* 17-19px */
+}
+
+/* ============================================
+   BASE TYPOGRAPHY STYLES
+   ============================================ */
+
+/* Reset */
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--text-base-line-height);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  letter-spacing: var(--tracking-normal);
+}
+
+/* Headings - Fraunces serif */
+h1, h2, h3, h4, h5, h6,
+.heading-1, .heading-2, .heading-3, .heading-4, .heading-5, .heading-6 {
+  font-family: var(--font-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  letter-spacing: var(--tracking-tight);
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+}
+
+h1, .heading-1 {
+  font-size: var(--text-h1);
+  font-weight: var(--text-h1-weight);
+  line-height: var(--text-h1-line-height);
+  letter-spacing: -0.03em;
+}
+
+h2, .heading-2 {
+  font-size: var(--text-h2);
+  font-weight: var(--text-h2-weight);
+  line-height: var(--text-h2-line-height);
+  letter-spacing: -0.02em;
+}
+
+h3, .heading-3 {
+  font-size: var(--text-h3);
+  font-weight: var(--text-h3-weight);
+  line-height: var(--text-h3-line-height);
+  letter-spacing: -0.015em;
+}
+
+h4, .heading-4 {
+  font-size: var(--text-h4);
+  font-weight: var(--text-h4-weight);
+  line-height: var(--text-h4-line-height);
+  letter-spacing: -0.01em;
+}
+
+h5, .heading-5 {
+  font-size: var(--text-h5);
+  font-weight: var(--text-h5-weight);
+  line-height: var(--text-h5-line-height);
+}
+
+h6, .heading-6 {
+  font-size: var(--text-h6);
+  font-weight: var(--text-h6-weight);
+  line-height: var(--text-h6-line-height);
+}
+
+/* Paragraphs & Body Text */
+p {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  line-height: var(--leading-relaxed);
+}
+
+.lead {
+  font-size: var(--text-lg);
+  line-height: var(--text-lg-line-height);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.small, small {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+  color: var(--color-text-muted);
+}
+
+.caption {
+  font-size: var(--text-caption);
+  line-height: var(--text-caption-line-height);
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Links */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--easing-standard);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}
+
+/* Lists */
+ul, ol {
+  padding-left: var(--space-6);
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+}
+
+li {
+  margin-bottom: var(--space-2);
+  line-height: var(--leading-relaxed);
+}
+
+li::marker {
+  color: var(--color-primary);
+  font-weight: var(--weight-bold);
+}
+
+/* Blockquotes */
+blockquote {
+  margin: var(--space-6) 0;
+  padding: var(--space-4) var(--space-6);
+  border-left: 4px solid var(--color-primary);
+  background: var(--color-primary-light);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+
+blockquote footer {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-style: normal;
+}
+
+blockquote footer::before {
+  content: '— ';
+}
+
+/* Code */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 0.125em 0.375em;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  padding: var(--space-4);
+  background: #1E1E2E;
+  color: #E0E2EB;
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Font Families */
+.font-heading { font-family: var(--font-heading); }
+.font-body { font-family: var(--font-body); }
+.font-mono { font-family: var(--font-mono); }
+
+/* Font Weights */
+.font-light { font-weight: var(--weight-light); }
+.font-regular { font-weight: var(--weight-regular); }
+.font-medium { font-weight: var(--weight-medium); }
+.font-semibold { font-weight: var(--weight-semibold); }
+.font-bold { font-weight: var(--weight-bold); }
+.font-black { font-weight: var(--weight-black); }
+
+/* Font Sizes */
+.text-display { font-size: var(--text-display); font-weight: var(--weight-bold); line-height: var(--leading-tight); letter-spacing: -0.03em; }
+.text-h1 { font-size: var(--text-h1); font-weight: 700; line-height: 1.15; letter-spacing: -0.03em; }
+.text-h2 { font-size: var(--text-h2); font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
+.text-h3 { font-size: var(--text-h3); font-weight: 600; line-height: 1.25; letter-spacing: -0.015em; }
+.text-h4 { font-size: var(--text-h4); font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.text-h5 { font-size: var(--text-h5); font-weight: 600; line-height: 1.35; }
+.text-h6 { font-size: var(--text-h6); font-weight: 600; line-height: 1.4; }
+.text-lg { font-size: var(--text-lg); line-height: var(--text-lg-line-height); }
+.text-base { font-size: var(--text-base); line-height: var(--text-base-line-height); }
+.text-sm { font-size: var(--text-sm); line-height: var(--text-sm-line-height); }
+.text-xs { font-size: var(--text-xs); line-height: var(--text-xs-line-height); }
+.text-caption { font-size: var(--text-caption); line-height: var(--text-caption-line-height); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Line Heights */
+.leading-none { line-height: 1; }
+.leading-tight { line-height: 1.1; }
+.leading-snug { line-height: 1.25; }
+.leading-normal { line-height: 1.5; }
+.leading-relaxed { line-height: 1.625; }
+.leading-loose { line-height: 2; }
+
+/* Letter Spacing */
+.tracking-tight { letter-spacing: -0.02em; }
+.tracking-normal { letter-spacing: 0; }
+.tracking-wide { letter-spacing: 0.02em; }
+.tracking-wider { letter-spacing: 0.04em; }
+.tracking-widest { letter-spacing: 0.08em; }
+
+/* Text Alignment */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+
+/* Text Transform */
+.uppercase { text-transform: uppercase; letter-spacing: 0.05em; }
+.lowercase { text-transform: lowercase; }
+.capitalize { text-transform: capitalize; }
+.normal-case { text-transform: none; }
+
+/* Text Truncation */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Text Colors */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+.text-inverse { color: var(--color-text-inverse); }
+.text-brand { color: var(--color-primary); }
+.text-accent { color: var(--color-accent); }
+.text-success { color: var(--color-glucose-in-range); }
+.text-warning { color: var(--color-glucose-high); }
+.text-error { color: var(--color-glucose-low); }
+.text-critical { color: var(--color-glucose-very-low); }
+
+/* Font Smoothing */
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.subpixel-antialiased {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+/* ============================================
+   INDIC LANGUAGE SUPPORT
+   ============================================ */
+
+/* Hindi / Devanagari */
+.lang-hi {
+  font-family: 'Noto Sans Devanagari', var(--font-body);
+  font-feature-settings: 'liga' 1, 'clig' 1;
+}
+
+/* Tamil */
+.lang-ta {
+  font-family: 'Noto Sans Tamil', var(--font-body);
+}
+
+/* Telugu */
+.lang-te {
+  font-family: 'Noto Sans Telugu', var(--font-body);
+}
+
+/* Marathi */
+.lang-mr {
+  font-family: 'Noto Sans Devanagari', var(--font-body);
+}
+
+/* Gujarati */
+.lang-gu {
+  font-family: 'Noto Sans Gujarati', var(--font-body);
+}
+
+/* Bengali */
+.lang-bn {
+  font-family: 'Noto Sans Bengali', var(--font-body);
+}
+
+/* Punjabi */
+.lang-pa {
+  font-family: 'Noto Sans Gurmukhi', var(--font-body);
+}
+
+/* Kannada */
+.lang-kn {
+  font-family: 'Noto Sans Kannada', var(--font-body);
+}
+
+/* Malayalam */
+.lang-ml {
+  font-family: 'Noto Sans Malayalam', var(--font-body);
+}
+
+/* Headings in Indic languages use Fraunces for Latin, Noto for Indic */
+.lang-hi h1, .lang-hi h2, .lang-hi h3, .lang-hi h4, .lang-hi h5, .lang-hi h6,
+.lang-ta h1, .lang-ta h2, .lang-ta h3, .lang-ta h4, .lang-ta h5, .lang-ta h6,
+.lang-te h1, .lang-te h2, .lang-te h3, .lang-te h4, .lang-te h5, .lang-te h6,
+.lang-mr h1, .lang-mr h2, .lang-mr h3, .lang-mr h4, .lang-mr h5, .lang-mr h6,
+.lang-gu h1, .lang-gu h2, .lang-gu h3, .lang-gu h4, .lang-gu h5, .lang-gu h6,
+.lang-bn h1, .lang-bn h2, .lang-bn h3, .lang-bn h4, .lang-bn h5, .lang-bn h6,
+.lang-pa h1, .lang-pa h2, .lang-pa h3, .lang-pa h4, .lang-pa h5, .lang-pa h6,
+.lang-kn h1, .lang-kn h2, .lang-kn h3, .lang-kn h4, .lang-kn h5, .lang-kn h6,
+.lang-ml h1, .lang-ml h2, .lang-ml h3, .lang-ml h4, .lang-ml h5, .lang-ml h6 {
+  font-family: 'Fraunces', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Noto Sans Gurmukhi', 'Noto Sans Kannada', 'Noto Sans Malayalam', serif;
+}
+
+/* ============================================
+   RTL SUPPORT
+   ============================================ */
+
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+
+[dir="rtl"] .ml-auto { margin-left: auto; margin-right: 0; }
+[dir="rtl"] .mr-auto { margin-right: auto; margin-left: 0; }
+
+[dir="rtl"] .space-x-reverse > :not([hidden]) ~ * {
+  --tw-space-x-reverse: 1;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    background: #fff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    color: #000;
+  }
+
+  a {
+    text-decoration: none;
+    color: #000;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .page-break-before { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  .page-break-inside-avoid { page-break-inside: avoid; }
+}
