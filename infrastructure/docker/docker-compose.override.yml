@@ -1,0 +1,104 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+# Use: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+
+services:
+  # API Service - Development
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://t1d:t1d_dev_password@postgres:5432/t1d?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-super-secret-jwt-key-change-in-production-min-32-chars
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      ML_SERVICE_URL: http://ml:8000
+      ML_SERVICE_API_KEY: dev-ml-key
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      CLERK_WEBHOOK_SECRET: ${CLERK_WEBHOOK_SECRET}
+      DEXCOM_CLIENT_ID: ${DEXCOM_CLIENT_ID}
+      DEXCOM_CLIENT_SECRET: ${DEXCOM_CLIENT_SECRET}
+      DEXCOM_REDIRECT_URI: ${DEXCOM_REDIRECT_URI}
+      LIBRE_CLIENT_ID: ${LIBRE_CLIENT_ID}
+      LIBRE_CLIENT_SECRET: ${LIBRE_CLIENT_SECRET}
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET_MODELS: t1d-models
+      S3_BUCKET_PHOTOS: t1d-meal-photos
+      S3_REGION: ap-south-1
+      ENABLE_SWAGGER: "true"
+      ENABLE_METRICS: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../apps/api:/app/apps/api:ro
+      - ../../packages/shared:/app/packages/shared:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev:api
+
+  # ML Service - Development
+  ml:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.ml
+    environment:
+      ML_SERVICE_API_KEY: dev-ml-key
+      MODEL_PATH: /models
+      HYPO_MODEL_NAME: tft_hypo_predictor.onnx
+      CARB_MODEL_NAME: carb_estimator.onnx
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../apps/ml-service:/app:ro
+      - ml_models:/models
+    depends_on:
+      - minio
+    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # MinIO with development settings
+  minio:
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    restart: unless-stopped
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # UI
+      - "6831:6831/udp"  # Agent
+      - "14268:14268"  # Collector
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped
+
+volumes:
+  ml_models:
+  postgres_data:
+  redis_data:
+  minio_data:
